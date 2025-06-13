@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "819046930445",
+    "project_id": "tragolisto-bd26c",
+    "storage_bucket": "tragolisto-bd26c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:819046930445:android:c7573e953abf0a86c91d44",
+        "android_client_info": {
+          "package_name": "com.example.tragolisto"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "819046930445-077lqnan3g35nrlh08vulqccruq9mdll.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.tragolisto",
+            "certificate_hash": "8d09adaa6636e63bf069b5c54d690b2eb75518ca"
+          }
+        },
+        {
+          "client_id": "819046930445-b5k6uh0e9m60lj1srqku1h51fvpitst0.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCS3qX-Knk4M8ESA3PKFk7ULEAhg0jKJh8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "819046930445-b5k6uh0e9m60lj1srqku1h51fvpitst0.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
