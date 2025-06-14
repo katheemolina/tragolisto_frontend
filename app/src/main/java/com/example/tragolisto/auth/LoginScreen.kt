@@ -93,7 +93,9 @@ class LoginScreen : ComponentActivity() {
             .addOnCompleteListener(this) { task ->
                 if (task.isSuccessful) {
                     val user = auth.currentUser
-                    Log.d("LoginScreen", "Sign-in success: ${user?.email}")
+                    val uid = user?.uid
+                    Log.d("LoginScreen", "Sign-in success: ${user?.email}, UID: $uid")
+
                     updateUIState(isLoading = false, errorMessage = null)
                     goToMain()
                 } else {
