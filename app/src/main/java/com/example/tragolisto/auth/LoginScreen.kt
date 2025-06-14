@@ -29,6 +29,14 @@ import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.auth
+import okhttp3.Call
+import okhttp3.Callback
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.Response
+import java.io.IOException
 
 class LoginScreen : ComponentActivity() {
 
@@ -106,6 +114,9 @@ class LoginScreen : ComponentActivity() {
                         nombre = nombre
                     )
 
+                    // Enviar toda la info al backendAdd commentMore actions
+                    enviarUsuarioAlBackend(idToken, uid, email, nombre ?: "")
+
                     updateUIState(isLoading = false, errorMessage = null)
                     goToMain()
                 } else {
@@ -116,6 +127,38 @@ class LoginScreen : ComponentActivity() {
                     )
                 }
             }
+    }
+
+    private fun enviarUsuarioAlBackend(idToken: String, uid: String?, email: String?, name: String) {
+        val backendUrl = "http://10.0.2.2:8000/login-google" // Cambialo por tu URL real
+
+        val jsonBody = """
+    {
+        "id_token": "$idToken",
+        "uid": "$uid",
+        "email": "$email",
+        "name": "$name"
+    }
+    """.trimIndent()
+
+        val requestBody = jsonBody.toRequestBody("application/json".toMediaType())
+        val client = OkHttpClient()
+
+        val request = Request.Builder()
+            .url(backendUrl)
+            .post(requestBody)
+            .build()
+
+        client.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                Log.e("LoginScreen", "Error al enviar datos al backend", e)
+            }
+
+            override fun onResponse(call: Call, response: Response) {
+                val responseData = response.body?.string()
+                Log.d("LoginScreen", "Respuesta del backend: $responseData")
+            }
+        })
     }
 
     private fun updateUIState(isLoading: Boolean, errorMessage: String?) {
