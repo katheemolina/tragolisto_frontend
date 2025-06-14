@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat.startActivity
 import android.content.Intent
 import android.net.Uri
+import com.example.tragolisto.data.global.usuarioglobal
 
 @Composable
 fun HomeScreen(

@@ -1,5 +1,6 @@
 package com.example.tragolisto.onboarding
 
+import android.provider.Settings.Global.getString
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.BorderStroke
@@ -17,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -24,6 +26,7 @@ import androidx.compose.ui.unit.sp
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import com.example.tragolisto.ui.theme.*
+import com.example.tragolisto.data.global.usuarioglobal
 
 data class OnboardingPage(
     val title: String,
@@ -213,7 +216,7 @@ fun OnboardingScreen(
             } else {
                 // User info collection page
                 Text(
-                    text = "Hola Katherine",
+                    text = "Hola " + (usuarioglobal?.nombre ?: "default"),
                     style = MaterialTheme.typography.headlineLarge.copy(
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary

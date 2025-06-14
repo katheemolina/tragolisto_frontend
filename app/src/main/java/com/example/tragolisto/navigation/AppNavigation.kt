@@ -6,6 +6,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.tragolisto.chat.ChatScreen
 import com.example.tragolisto.creations.CreationsScreen
+import com.example.tragolisto.data.global.usuarioglobal
 import com.example.tragolisto.favorites.FavoritesScreen
 import com.example.tragolisto.home.HomeScreen
 import com.example.tragolisto.onboarding.OnboardingScreen
@@ -47,7 +48,7 @@ fun AppNavigation() {
 
         composable(Screen.Home.route) {
             HomeScreen(
-                userName = userName,
+                userName = (usuarioglobal?.nombre ?: "default"),
                 onChatClick = { navController.navigate(Screen.Chat.route) },
                 onFavoritesClick = { navController.navigate(Screen.Favorites.route) },
                 onPartyClick = { navController.navigate(Screen.Party.route) },
