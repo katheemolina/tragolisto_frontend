@@ -1,10 +1,7 @@
 package com.example.tragolisto.onboarding
 
-import android.provider.Settings.Global.getString
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -16,9 +13,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -27,6 +21,9 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import com.example.tragolisto.ui.theme.*
 import com.example.tragolisto.data.global.usuarioglobal
+import com.example.tragolisto.data.api.ClientApi
+import android.util.Log
+import com.google.firebase.auth.FirebaseAuth // Import FirebaseAuth
 
 data class OnboardingPage(
     val title: String,
@@ -64,7 +61,7 @@ fun DotIndicator(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OnboardingScreen(
-    onFinish: (String, LocalDate) -> Unit
+    onFinish: () -> Unit
 ) {
     var currentPage by remember { mutableStateOf(0) }
     var birthDate by remember { mutableStateOf<LocalDate?>(null) }
@@ -73,7 +70,11 @@ fun OnboardingScreen(
         initialSelectedDateMillis = birthDate?.toEpochDay()?.times(24 * 60 * 60 * 1000)
             ?: System.currentTimeMillis()
     )
-    
+    var isSavingBirthDate by remember { mutableStateOf(false) }
+    var errorMessage: String? by remember { mutableStateOf(null) } // To display error messages to the user
+
+    val auth = FirebaseAuth.getInstance() // Get FirebaseAuth instance
+
     val pages = listOf(
         OnboardingPage(
             title = "Hola soy Ferni",
@@ -122,7 +123,7 @@ fun OnboardingScreen(
             if (currentPage < pages.size) {
                 // Regular onboarding pages
                 val page = pages[currentPage]
-                
+
                 page.emoji?.let { emoji ->
                     Text(
                         text = emoji,
@@ -174,6 +175,7 @@ fun OnboardingScreen(
                         Spacer(modifier = Modifier.size(48.dp))
                     }
 
+                    // Next / Let's Start Button
                     if (currentPage < pages.size - 1) {
                         IconButton(
                             onClick = { currentPage++ },
@@ -189,8 +191,9 @@ fun OnboardingScreen(
                             )
                         }
                     } else {
+                        // Last intro page, button to move to the date of birth collection page
                         Button(
-                            onClick = { currentPage++ },
+                            onClick = { currentPage++ }, // Advance to the data collection page
                             modifier = Modifier
                                 .height(48.dp)
                                 .clip(RoundedCornerShape(24.dp)),
@@ -214,7 +217,7 @@ fun OnboardingScreen(
                     modifier = Modifier.padding(top = 48.dp)
                 )
             } else {
-                // User info collection page
+                // User info collection page (after all intro pages)
                 Text(
                     text = "Hola " + (usuarioglobal?.nombre ?: "default"),
                     style = MaterialTheme.typography.headlineLarge.copy(
@@ -223,7 +226,7 @@ fun OnboardingScreen(
                     ),
                     modifier = Modifier.padding(bottom = 24.dp)
                 )
-                
+
                 Text(
                     text = "Antes de comenzar, necesitamos tu fecha de nacimiento",
                     style = MaterialTheme.typography.bodyLarge.copy(
@@ -248,9 +251,68 @@ fun OnboardingScreen(
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Text(
-                        text = birthDate?.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) 
+                        text = birthDate?.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
                             ?: "Seleccionar fecha de nacimiento",
                         style = MaterialTheme.typography.titleMedium
+                    )
+                }
+
+                // Button to finalize onboarding
+                Spacer(modifier = Modifier.height(24.dp))
+                Button(
+                    onClick = {
+                        if (birthDate != null && !isSavingBirthDate) {
+                            isSavingBirthDate = true
+                            errorMessage = null // Clear previous error messages
+
+                                                        // Get the current user's ID Token from Firebase
+                            auth.currentUser?.getIdToken(true)?.addOnCompleteListener { task ->
+                                if (task.isSuccessful) {
+                                    val idToken = usuarioglobal?.idToken
+                                    if (idToken != null) {
+                                        // Call the new `completarOnboarding` function in ClientApi
+                                        Log.d("OnboardingScreen", "ID Token a enviar: ${idToken.take(20)}... (truncado)")
+                                        Log.d("OnboardingScreen", "Fecha de nacimiento a enviar: ${birthDate!!.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))}")
+
+                                        ClientApi.completarOnboarding(idToken, birthDate!!) { success, message ->
+                                            isSavingBirthDate = false
+                                            if (success) {
+                                                Log.d("OnboardingScreen", "Onboarding completed successfully: $message")
+                                                onFinish() // Call onFinish to navigate to Home
+                                            } else {
+                                                Log.e("OnboardingScreen", "Error completing onboarding: $message")
+                                                errorMessage = "Error: $message" // Display error in UI
+                                            }
+                                        }
+                                    } else {
+                                        isSavingBirthDate = false
+                                        errorMessage = "Error: Couldn't get user ID Token."
+                                        Log.e("OnboardingScreen", "ID Token is null.")
+                                    }
+                                } else {
+                                    isSavingBirthDate = false
+                                    errorMessage = "Error getting ID Token: ${task.exception?.localizedMessage}"
+                                    Log.e("OnboardingScreen", "Failed to get ID Token: ${task.exception}")
+                                }
+                            }
+                        }
+                    },
+                    enabled = birthDate != null && !isSavingBirthDate, // Enabled if date selected and not saving
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    if (isSavingBirthDate) {
+                        CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                    } else {
+                        Text("¡Listo, comencemos!")
+                    }
+                }
+
+                // Display error message if any
+                if (errorMessage != null) {
+                    Text(
+                        text = errorMessage!!,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.padding(top = 8.dp)
                     )
                 }
 
@@ -263,7 +325,7 @@ fun OnboardingScreen(
                                     datePickerState.selectedDateMillis?.let { millis ->
                                         birthDate = LocalDate.ofEpochDay(millis / (24 * 60 * 60 * 1000))
                                         showDatePicker = false
-                                        onFinish("Katherine", birthDate!!)
+                                        // NOTE: Do not call onFinish here, only when the "Let's start!" button is pressed
                                     }
                                 }
                             ) {
@@ -288,13 +350,13 @@ fun OnboardingScreen(
                     ) {
                         DatePicker(
                             state = datePickerState,
-                            title = { 
+                            title = {
                                 Text(
                                     "Selecciona tu fecha de nacimiento",
                                     style = MaterialTheme.typography.titleLarge
                                 )
                             },
-                            headline = { 
+                            headline = {
                                 Text(
                                     "Fecha de nacimiento",
                                     style = MaterialTheme.typography.titleMedium
@@ -307,4 +369,4 @@ fun OnboardingScreen(
             }
         }
     }
-} 
+}

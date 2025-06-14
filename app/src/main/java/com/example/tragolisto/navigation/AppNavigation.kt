@@ -9,7 +9,7 @@ import com.example.tragolisto.creations.CreationsScreen
 import com.example.tragolisto.data.global.usuarioglobal
 import com.example.tragolisto.favorites.FavoritesScreen
 import com.example.tragolisto.home.HomeScreen
-import com.example.tragolisto.onboarding.OnboardingScreen
+import com.example.tragolisto.onboarding.OnboardingScreen // Make sure this is a Composable!
 import com.example.tragolisto.party.PartyScreen
 import com.example.tragolisto.recipes.RecipesScreen
 import java.time.LocalDate
@@ -25,22 +25,29 @@ sealed class Screen(val route: String) {
 }
 
 @Composable
-fun AppNavigation() {
+fun AppNavigation(requiresOnboarding: Boolean) { // <-- ¡Añadimos este parámetro!
     val navController = rememberNavController()
-    var userName by remember { mutableStateOf("") }
-    var userBirthDate by remember { mutableStateOf<LocalDate?>(null) }
+
+    // Decidir la ruta de inicio basada en 'requiresOnboarding'
+    val startRoute = if (requiresOnboarding) {
+        Screen.Onboarding.route
+    } else {
+        Screen.Home.route
+    }
 
     NavHost(
         navController = navController,
-        startDestination = Screen.Onboarding.route
+        startDestination = startRoute // <-- La ruta inicial ahora es dinámica
     ) {
         composable(Screen.Onboarding.route) {
             OnboardingScreen(
-                onFinish = { name, birthDate ->
-                    userName = name
-                    userBirthDate = birthDate
+                onFinish = {
+                    // Después de que el onboarding en la UI se "complete",
+                    // navegamos a Home. Asumimos que si hay datos adicionales
+                    // como nombre o fecha de nacimiento, OnboardingScreen los
+                    // habrá enviado al backend.
                     navController.navigate(Screen.Home.route) {
-                        popUpTo(Screen.Onboarding.route) { inclusive = true }
+                        popUpTo(Screen.Onboarding.route) { inclusive = true } // Elimina Onboarding de la pila
                     }
                 }
             )
@@ -48,7 +55,9 @@ fun AppNavigation() {
 
         composable(Screen.Home.route) {
             HomeScreen(
-                userName = (usuarioglobal?.nombre ?: "default"),
+                // Aquí, 'usuarioglobal?.nombre' debería estar ya establecido desde MainActivity
+                // después de la autenticación de Firebase y la llamada inicial al backend.
+                userName = (usuarioglobal?.nombre ?: "Usuario"), // Usar "Usuario" si el nombre es nulo
                 onChatClick = { navController.navigate(Screen.Chat.route) },
                 onFavoritesClick = { navController.navigate(Screen.Favorites.route) },
                 onPartyClick = { navController.navigate(Screen.Party.route) },
@@ -87,4 +96,4 @@ fun AppNavigation() {
             )
         }
     }
-} 
+}
