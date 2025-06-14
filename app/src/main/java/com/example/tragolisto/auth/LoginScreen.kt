@@ -1,5 +1,10 @@
 package com.example.tragolisto.auth
 
+import okhttp3.*
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.RequestBody.Companion.toRequestBody
+import java.io.IOException
+
 import android.content.Intent
 import android.util.Log
 import android.os.Bundle
@@ -93,13 +98,19 @@ class LoginScreen : ComponentActivity() {
             .addOnCompleteListener(this) { task ->
                 if (task.isSuccessful) {
                     val user = auth.currentUser
-                    val uid = user?.uid
-                    Log.d("LoginScreen", "Sign-in success: ${user?.email}, UID: $uid")
+                    val uid = user?.uid ?: ""
+                    val email = user?.email ?: ""
+                    val name = user?.displayName ?: ""
+
+                    Log.d("LoginScreen", "Firebase login success: $email, UID: $uid")
+
+                    // Enviar toda la info al backend
+                    enviarUsuarioAlBackend(idToken, uid, email, name)
 
                     updateUIState(isLoading = false, errorMessage = null)
                     goToMain()
                 } else {
-                    Log.w("LoginScreen", "Sign-in failed", task.exception)
+                    Log.w("LoginScreen", "Firebase sign-in failed", task.exception)
                     updateUIState(
                         isLoading = false,
                         errorMessage = "Error de autenticación: ${task.exception?.localizedMessage ?: "Error desconocido"}"
@@ -107,6 +118,39 @@ class LoginScreen : ComponentActivity() {
                 }
             }
     }
+
+    private fun enviarUsuarioAlBackend(idToken: String, uid: String, email: String, name: String) {
+        val backendUrl = "http://10.0.2.2:8000/login-google" // Cambialo por tu URL real
+
+        val jsonBody = """
+    {
+        "id_token": "$idToken",
+        "uid": "$uid",
+        "email": "$email",
+        "name": "$name"
+    }
+    """.trimIndent()
+
+        val requestBody = jsonBody.toRequestBody("application/json".toMediaType())
+        val client = OkHttpClient()
+
+        val request = Request.Builder()
+            .url(backendUrl)
+            .post(requestBody)
+            .build()
+
+        client.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                Log.e("LoginScreen", "Error al enviar datos al backend", e)
+            }
+
+            override fun onResponse(call: Call, response: Response) {
+                val responseData = response.body?.string()
+                Log.d("LoginScreen", "Respuesta del backend: $responseData")
+            }
+        })
+    }
+
 
     private fun updateUIState(isLoading: Boolean, errorMessage: String?) {
         // Update the UI state using Compose state
