@@ -1,6 +1,7 @@
 package com.example.tragolisto.auth
 
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -23,8 +24,14 @@ import com.example.tragolisto.data.api.ClientApi
 import com.example.tragolisto.data.global.UserGlobal
 import com.example.tragolisto.data.global.usuarioglobal
 import com.example.tragolisto.ui.theme.TragoListoTheme
-import com.google.android.gms.auth.api.signin.GoogleSignIn
-import com.google.android.gms.auth.api.signin.GoogleSignInClient
+
+import androidx.credentials.CredentialManager
+import androidx.credentials.GetCredentialRequest
+import androidx.credentials.exceptions.GetCredentialException
+import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential.Companion.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL
+
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
 import com.google.firebase.Firebase
@@ -39,61 +46,21 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Brush
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 
 
 class LoginScreen : ComponentActivity() {
 
     private lateinit var auth: FirebaseAuth
-    private lateinit var googleSignInClient: GoogleSignInClient
-    private lateinit var signInLauncher: ActivityResultLauncher<Intent>
+    private lateinit var credentialManager: CredentialManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
         auth = Firebase.auth
-
-        // Configurar Google Sign In
-        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            .requestIdToken(getString(R.string.default_web_client_id))
-            .requestEmail()
-            .build()
-
-        googleSignInClient = GoogleSignIn.getClient(this, gso)
-
-        // Inicializar el lanzador de inicio de sesión
-        // El resultado de este lanzador manejará la autenticación con Firebase
-        signInLauncher = registerForActivityResult(
-            ActivityResultContracts.StartActivityForResult()
-        ) { result ->
-            val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
-            try {
-                val account = task.getResult(ApiException::class.java)
-                // Cuando se obtiene una cuenta con éxito, autenticar con Firebase
-                firebaseAuthWithGoogle(account.idToken!!)
-            } catch (e: ApiException) {
-                Log.w("LoginScreen", "Google sign in failed", e)
-                // Usar setContent aquí para actualizar la UI con el error de forma segura.
-                // Es importante que los estados `isLoading` y `errorMessage` se manejen dentro del `setContent`
-                // para que Compose pueda reaccionar a los cambios.
-                setContent {
-                    TragoListoTheme {
-                        Surface(modifier = Modifier.fillMaxSize()) {
-                            // Los estados aquí deben ser `remember`ed y `mutableStateOf`
-                            val isLoadingState by remember { mutableStateOf(false) }
-                            val errorMessageState by remember { mutableStateOf<String?>(
-                                "Error al iniciar sesión con Google: ${e.localizedMessage}"
-                            ) }
-                            LoginScreenContent(
-                                isLoading = isLoadingState,
-                                errorMessage = errorMessageState,
-                                onGoogleSignIn = { signInWithGoogle() }
-                            )
-                        }
-                    }
-                }
-            }
-        }
+        credentialManager = CredentialManager.create(this)
 
         // Establecer el contenido inicial de Compose para la pantalla de Login
         setContent {
@@ -109,7 +76,7 @@ class LoginScreen : ComponentActivity() {
                         onGoogleSignIn = {
                             isLoading = true
                             errorMessage = null
-                            signInWithGoogle()
+                            launchGoogleSignIn()
                         }
                     )
                 }
@@ -117,9 +84,47 @@ class LoginScreen : ComponentActivity() {
         }
     }
 
-    private fun signInWithGoogle() {
-        val signInIntent = googleSignInClient.signInIntent
-        signInLauncher.launch(signInIntent)
+    private fun launchGoogleSignIn() {
+        val googleIdOption = GetGoogleIdOption.Builder()
+            .setServerClientId(getString(R.string.default_web_client_id))
+            .setFilterByAuthorizedAccounts(false) // Cambia a true si querés limitar solo a cuentas ya autorizadas
+            .build()
+
+        val request = GetCredentialRequest.Builder()
+            .addCredentialOption(googleIdOption)
+            .build()
+
+        lifecycleScope.launch {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                try {
+                    val result = credentialManager.getCredential(
+                        context = this@LoginScreen,
+                        request = request
+                    )
+                    handleSignIn(result.credential)
+                } catch (e: GetCredentialException) {
+                    Log.e("LoginScreen", "Error al obtener credenciales: ${e.localizedMessage}")
+                }
+            }
+        }
+    }
+
+    private fun handleSignIn(credential: androidx.credentials.Credential) {
+        if (credential is androidx.credentials.CustomCredential &&
+            credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL
+        ) {
+            val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
+            val idToken = googleIdTokenCredential.idToken
+            if (!idToken.isNullOrEmpty()) {
+                firebaseAuthWithGoogle(idToken)
+            } else {
+                Log.w("LoginScreen", "ID token vacío o nulo")
+
+            }
+        } else {
+            Log.w("LoginScreen", "Tipo de credencial inesperado: ${credential.javaClass.simpleName}")
+
+        }
     }
 
     private fun firebaseAuthWithGoogle(idToken: String) {
@@ -140,7 +145,6 @@ class LoginScreen : ComponentActivity() {
                         nombre = nombre,
                         idToken = idToken
                     )
-
                     // Enviar los datos iniciales de Google al backend
                     ClientApi.sendGoogleLoginData(idToken, uid, email, nombre ?: "") { success, responseData ->
                         if (success) {
@@ -166,7 +170,7 @@ class LoginScreen : ComponentActivity() {
                                             LoginScreenContent(
                                                 isLoading = isLoadingState,
                                                 errorMessage = errorMessageState,
-                                                onGoogleSignIn = { signInWithGoogle() }
+                                                onGoogleSignIn = { launchGoogleSignIn() }
                                             )
                                         }
                                     }
@@ -190,7 +194,7 @@ class LoginScreen : ComponentActivity() {
                                     LoginScreenContent(
                                         isLoading = isLoadingState,
                                         errorMessage = errorMessageState,
-                                        onGoogleSignIn = { signInWithGoogle() }
+                                        onGoogleSignIn = { launchGoogleSignIn() }
                                     )
                                 }
                             }
