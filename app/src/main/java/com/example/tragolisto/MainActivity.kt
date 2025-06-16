@@ -95,7 +95,11 @@ class MainActivity : ComponentActivity() {
                                 ClientApi.verificarOnboarding(currentIdToken) { onboardingResponse, errorMessage ->
                                     if (onboardingResponse != null) {
                                         requiresOnboarding = onboardingResponse.requiere_onboarding
-                                        Log.d("MainActivity", "Estado de onboarding recibido: ${requiresOnboarding}")
+                                        // Actualizar usuarioglobal con el id_usuario del backend
+                                        usuarioglobal = usuarioglobal?.copy(
+                                            id_usuario = onboardingResponse.id_usuario
+                                        )
+                                        Log.d("MainActivity", "Estado de onboarding recibido: ${requiresOnboarding}, ID Usuario: ${onboardingResponse.id_usuario}")
                                     } else {
                                         Log.e("MainActivity", "Error al verificar onboarding: $errorMessage. Asumiendo que requiere onboarding por seguridad.")
                                         requiresOnboarding = true

@@ -4,6 +4,7 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import com.google.gson.Gson
+import com.google.gson.annotations.SerializedName
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.MediaType.Companion.toMediaType
@@ -17,6 +18,7 @@ import java.io.IOException
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.TimeUnit
+import com.example.tragolisto.data.model.Trago
 
 object ClientApi {
 
@@ -35,6 +37,16 @@ object ClientApi {
         val id_usuario: Int,
         val fecha_nacimiento: String?,
         val requiere_onboarding: Boolean
+    )
+
+    data class FavoritoResponse(
+        val id: Int,
+        val user_id: Int,
+        val trago_id: Int,
+        val created_at: String,
+        val updated_at: String,
+        val deleted_at: String?,
+        val trago: Trago
     )
 
     fun sendGoogleLoginData(idToken: String, uid: String?, email: String?, name: String, callback: (Boolean, String?) -> Unit) {
@@ -164,6 +176,73 @@ object ClientApi {
                     } else {
                         callback(false, "Error de servidor al completar onboarding: ${response.code} - $responseData")
                     }
+                }
+            }
+        })
+    }
+
+    fun obtenerFavoritos(userId: Int, callback: (List<Trago>?, String?) -> Unit) {
+        val backendUrl = "$BASE_URL/api/favoritos/$userId"
+        
+        val request = Request.Builder()
+            .url(backendUrl)
+            .get()
+            .build()
+
+        client.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                Log.e("ClientApi", "Error al obtener favoritos", e)
+                callback(null, "Error de red: ${e.localizedMessage}")
+            }
+
+            override fun onResponse(call: Call, response: Response) {
+                val responseData = response.body?.string()
+                Log.d("ClientApi", "Respuesta de favoritos: $responseData")
+
+                if (response.isSuccessful && responseData != null) {
+                    try {
+                        val favoritosResponse = gson.fromJson(responseData, Array<FavoritoResponse>::class.java)
+                        val tragos = favoritosResponse.map { it.trago }
+                        callback(tragos, null)
+                    } catch (e: Exception) {
+                        Log.e("ClientApi", "Error al parsear respuesta de favoritos", e)
+                        callback(null, "Error al parsear respuesta: ${e.localizedMessage}")
+                    }
+                } else {
+                    callback(null, "Error de servidor: ${response.code} - $responseData")
+                }
+            }
+        })
+    }
+
+    fun obtenerTragoDetalle(tragoId: Int, callback: (Trago?, String?) -> Unit) {
+        val backendUrl = "$BASE_URL/api/tragos/$tragoId"
+        
+        val request = Request.Builder()
+            .url(backendUrl)
+            .get()
+            .build()
+
+        client.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                Log.e("ClientApi", "Error al obtener detalle del trago", e)
+                callback(null, "Error de red: ${e.localizedMessage}")
+            }
+
+            override fun onResponse(call: Call, response: Response) {
+                val responseData = response.body?.string()
+                Log.d("ClientApi", "Respuesta de detalle del trago: $responseData")
+
+                if (response.isSuccessful && responseData != null) {
+                    try {
+                        val trago = gson.fromJson(responseData, Trago::class.java)
+                        callback(trago, null)
+                    } catch (e: Exception) {
+                        Log.e("ClientApi", "Error al parsear respuesta del trago", e)
+                        callback(null, "Error al parsear respuesta: ${e.localizedMessage}")
+                    }
+                } else {
+                    callback(null, "Error de servidor: ${response.code} - $responseData")
                 }
             }
         })

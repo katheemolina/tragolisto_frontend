@@ -5,4 +5,5 @@ data class UserGlobal(
     val email: String?,
     val nombre: String?,
     val idToken: String?,
+    val id_usuario: Int? = null  // ID del usuario en el backend
 )
