@@ -32,6 +32,15 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.auth
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Brush
+
+
 class LoginScreen : ComponentActivity() {
 
     private lateinit var auth: FirebaseAuth
@@ -198,7 +207,6 @@ fun LoginScreenContent(
     errorMessage: String?,
     onGoogleSignIn: () -> Unit
 ) {
-    // Usar LocalContext para obtener el contexto si necesitas Toast o Intent dentro del Composable
     val context = LocalContext.current
 
     Column(
@@ -208,39 +216,75 @@ fun LoginScreenContent(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text(
-            text = "Bienvenido a TragoListo",
-            style = MaterialTheme.typography.headlineSmall
+
+        // ✅ Logo o imagen superior
+        Image(
+            painter = painterResource(id = R.drawable.test),
+            contentDescription = "Logo TragoListo",
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(250.dp) // alto fijo
+                .padding(bottom = 24.dp)
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+
+        // ✅ Texto con nueva tipografía y peso
+        //Text(
+        //  text = "Bienvenido a TragoListo",
+        //  fontSize = 28.sp,
+        //  fontWeight = FontWeight.Bold,
+        //  textAlign = TextAlign.Center,
+        //  modifier = Modifier.padding(bottom = 16.dp)
+        //)
 
         if (errorMessage != null) {
             Text(
                 text = errorMessage,
                 color = MaterialTheme.colorScheme.error,
                 style = MaterialTheme.typography.bodyMedium,
-                textAlign = TextAlign.Center, // Centrar el mensaje de error
+                textAlign = TextAlign.Center,
                 modifier = Modifier.padding(bottom = 16.dp)
             )
         }
 
+        // ✅ Botón personalizado con ícono de Google
         Button(
             onClick = onGoogleSignIn,
             enabled = !isLoading,
-            modifier = Modifier.fillMaxWidth()
+            shape = RoundedCornerShape(12.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color.White,
+                contentColor = Color.Black
+            ),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp)
         ) {
             if (isLoading) {
                 CircularProgressIndicator(
                     modifier = Modifier.size(24.dp),
-                    color = MaterialTheme.colorScheme.onPrimary
+                    color = MaterialTheme.colorScheme.primary
                 )
             } else {
-                Text("Iniciar sesión con Google")
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Image(
+                        painter = painterResource(id = R.drawable.ic_google_logo),
+                        contentDescription = "Google Icon",
+                        modifier = Modifier
+                            .size(24.dp)
+                            .padding(end = 8.dp)
+                    )
+                    Text(
+                        text = "Iniciar sesión con Google",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
             }
         }
     }
 }
+
 
 @Preview(showBackground = true)
 @Composable

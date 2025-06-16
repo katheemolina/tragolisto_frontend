@@ -1,21 +1,28 @@
 package com.example.tragolisto.recipes
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog // Import Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.tragolisto.data.model.Trago
 import com.example.tragolisto.ui.viewmodel.TragoDetalleUiState
@@ -31,15 +38,20 @@ fun RecipesScreen(
     val uiState by viewModel.uiState.collectAsState()
     val tragoDetalleState by viewModel.tragoDetalleState.collectAsState()
 
+    var dificultadSeleccionada by rememberSaveable { mutableStateOf("Todas") }
+    var soloSinAlcohol by rememberSaveable { mutableStateOf(false) }
+    var busqueda by rememberSaveable(stateSaver = TextFieldValue.Saver) { mutableStateOf(TextFieldValue("")) }
+
+    val dificultades = listOf("Todas", "Fácil", "Media", "Difícil")
+
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { 
+            CenterAlignedTopAppBar(
+                title = {
                     Text(
-                        "Recetas",
-                        style = MaterialTheme.typography.headlineMedium.copy(
-                            fontWeight = FontWeight.Bold
-                        )
+                        text = "Recetas",
+                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                        textAlign = TextAlign.Center
                     )
                 },
                 navigationIcon = {
@@ -60,25 +72,72 @@ fun RecipesScreen(
         ) {
             when (uiState) {
                 is TragosUiState.Loading -> {
-                    CircularProgressIndicator(
-                        modifier = Modifier.align(Alignment.Center)
-                    )
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
                 }
+
                 is TragosUiState.Success -> {
-                    val tragos = (uiState as TragosUiState.Success).tragos
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        items(tragos) { trago ->
-                            TragoCard(
-                                trago = trago,
-                                onClick = { viewModel.cargarTragoDetalle(trago.id) }
+                    var tragos = (uiState as TragosUiState.Success).tragos
+
+                    tragos = tragos.filter {
+                        (dificultadSeleccionada == "Todas" || it.dificultad.equals(dificultadSeleccionada, true)) &&
+                                (!soloSinAlcohol || !it.esAlcoholico) &&
+                                (busqueda.text.isBlank() || it.nombre.contains(busqueda.text, ignoreCase = true))
+                    }
+
+                    Column(modifier = Modifier.fillMaxSize()) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            OutlinedTextField(
+                                value = busqueda,
+                                onValueChange = { busqueda = it },
+                                modifier = Modifier.fillMaxWidth(),
+                                placeholder = { Text("Buscar trago...") },
+                                singleLine = true,
+                                shape = RoundedCornerShape(12.dp)
                             )
+
+                            Spacer(modifier = Modifier.height(12.dp))
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                dificultades.forEach { dificultad ->
+                                    val seleccionado = dificultadSeleccionada == dificultad
+                                    FilterToggleButton(
+                                        text = dificultad,
+                                        selected = seleccionado,
+                                        onClick = { dificultadSeleccionada = dificultad }
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            Row {
+                                FilterToggleButton(
+                                    text = "Sin alcohol",
+                                    selected = soloSinAlcohol,
+                                    onClick = { soloSinAlcohol = !soloSinAlcohol }
+                                )
+                            }
+                        }
+
+                        LazyColumn(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(horizontal = 16.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            items(tragos) { trago ->
+                                TragoCard(
+                                    trago = trago,
+                                    onClick = { viewModel.cargarTragoDetalle(trago.id) }
+                                )
+                            }
                         }
                     }
                 }
+
                 is TragosUiState.Error -> {
                     Column(
                         modifier = Modifier
@@ -96,10 +155,7 @@ fun RecipesScreen(
                             onClick = { viewModel.cargarTragos() },
                             contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp)
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.Refresh,
-                                contentDescription = "Reintentar"
-                            )
+                            Icon(Icons.Default.Refresh, contentDescription = "Reintentar")
                             Spacer(modifier = Modifier.width(8.dp))
                             Text("Reintentar")
                         }
@@ -107,35 +163,70 @@ fun RecipesScreen(
                 }
             }
 
-            // Mostrar el diálogo de detalles del trago
-            when (tragoDetalleState) {
-                is TragoDetalleUiState.Loading -> {
-                    CircularProgressIndicator(
-                        modifier = Modifier.align(Alignment.Center)
-                    )
+            // Custom Dialog
+            if (tragoDetalleState is TragoDetalleUiState.Success) {
+                val trago = (tragoDetalleState as TragoDetalleUiState.Success).trago
+                Dialog(
+                    onDismissRequest = { viewModel.limpiarTragoDetalle() }
+                ) {
+                    // You can apply your animations here if you want custom ones for the dialog content
+                    // However, Dialog itself handles its entry/exit animations by default.
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .fillMaxHeight(0.9f)
+                            .padding(16.dp),
+                        shape = MaterialTheme.shapes.large,
+                        tonalElevation = 6.dp
+                    ) {
+                        TragoDialog(trago, { viewModel.limpiarTragoDetalle() })
+                    }
                 }
-                is TragoDetalleUiState.Success -> {
-                    val trago = (tragoDetalleState as TragoDetalleUiState.Success).trago
-                    TragoDialog(
-                        trago = trago,
-                        onDismiss = { viewModel.limpiarTragoDetalle() }
-                    )
-                }
-                is TragoDetalleUiState.Error -> {
-                    AlertDialog(
-                        onDismissRequest = { viewModel.limpiarTragoDetalle() },
-                        title = { Text("Error") },
-                        text = { Text((tragoDetalleState as TragoDetalleUiState.Error).message) },
-                        confirmButton = {
-                            TextButton(onClick = { viewModel.limpiarTragoDetalle() }) {
-                                Text("OK")
-                            }
+            }
+
+
+            if (tragoDetalleState is TragoDetalleUiState.Loading) {
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+            }
+
+            if (tragoDetalleState is TragoDetalleUiState.Error) {
+                AlertDialog(
+                    onDismissRequest = { viewModel.limpiarTragoDetalle() },
+                    title = { Text("Error") },
+                    text = { Text((tragoDetalleState as TragoDetalleUiState.Error).message) },
+                    confirmButton = {
+                        TextButton(onClick = { viewModel.limpiarTragoDetalle() }) {
+                            Text("OK")
                         }
-                    )
-                }
-                null -> { /* No dialog to show */ }
+                    }
+                )
             }
         }
+    }
+}
+
+@Composable
+fun FilterToggleButton(
+    text: String,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    val colors = if (selected) {
+        ButtonDefaults.filledTonalButtonColors()
+    } else {
+        ButtonDefaults.outlinedButtonColors()
+    }
+
+    val border = if (selected) null else ButtonDefaults.outlinedButtonBorder
+
+    Button(
+        onClick = onClick,
+        colors = colors,
+        border = border,
+        shape = RoundedCornerShape(50),
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+    ) {
+        Text(text)
     }
 }
 
@@ -148,36 +239,80 @@ fun TragoCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        ),
+        shape = MaterialTheme.shapes.large,
+        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(20.dp)
         ) {
             Text(
                 text = trago.nombre,
-                style = MaterialTheme.typography.titleLarge
+                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                color = MaterialTheme.colorScheme.onSurface
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = trago.descripcion,
-                style = MaterialTheme.typography.bodyMedium
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(12.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(
-                    text = "Dificultad: ${trago.dificultad}",
-                    style = MaterialTheme.typography.bodySmall
-                )
-                Text(
-                    text = "${trago.tiempoPreparacionMinutos} min",
-                    style = MaterialTheme.typography.bodySmall
-                )
+                AssistChip(label = "Dificultad", value = trago.dificultad)
+                AssistChip(label = "Tiempo", value = "${trago.tiempoPreparacionMinutos} min")
+                AssistChip(label = "Alcohol", value = if (trago.esAlcoholico) "Sí" else "No")
             }
         }
     }
-} 
+}
+
+@Composable
+fun AssistChip(label: String, value: String) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.primary
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodySmall,
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+    }
+}
+
+// You no longer need this composable
+// @Composable
+// fun TragoDialogOverlay(
+//    trago: Trago,
+//    onDismiss: () -> Unit
+// ) {
+//    Box(
+//        modifier = Modifier
+//            .fillMaxSize()
+//            .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.6f))
+//            .clickable(onClick = onDismiss),
+//        contentAlignment = Alignment.Center
+//    ) {
+//        Surface(
+//            modifier = Modifier
+//                .fillMaxWidth()
+//                .fillMaxHeight(0.9f)
+//                .padding(16.dp),
+//            shape = MaterialTheme.shapes.large,
+//            tonalElevation = 6.dp
+//        ) {
+//            TragoDialog(trago, onDismiss)
+//        }
+//    }
+// }

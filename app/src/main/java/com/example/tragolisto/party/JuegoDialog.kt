@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.example.tragolisto.data.model.JuegoFiesta
 
+@OptIn(ExperimentalLayoutApi::class) // Necesario para FlowRow
 @Composable
 fun JuegoDialog(
     juego: JuegoFiesta,
@@ -24,74 +25,64 @@ fun JuegoDialog(
             modifier = Modifier
                 .fillMaxWidth()
                 .fillMaxHeight(0.9f),
-            shape = MaterialTheme.shapes.large,
-            color = MaterialTheme.colorScheme.surface
+            shape = MaterialTheme.shapes.extraLarge, // Forma grande para el diálogo
+            tonalElevation = 6.dp, // Elevación para dar profundidad
+            color = MaterialTheme.colorScheme.background // Color de fondo del tema
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(16.dp)
+                    .padding(20.dp) // Padding consistente con TragoDialog
                     .verticalScroll(rememberScrollState())
             ) {
-                // Header
+                // Cabecera
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
                         text = juego.nombre,
-                        style = MaterialTheme.typography.headlineMedium.copy(
-                            fontWeight = FontWeight.Bold
-                        )
+                        style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.ExtraBold), // Estilo de título fuerte
+                        modifier = Modifier.weight(1f) // Ocupa el espacio disponible
                     )
                     IconButton(onClick = onDismiss) {
                         Icon(Icons.Default.Close, contentDescription = "Cerrar")
                     }
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Descripción
+                Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = juego.descripcion,
-                    style = MaterialTheme.typography.bodyLarge
+                    style = MaterialTheme.typography.bodyLarge, // Texto de cuerpo más grande
+                    color = MaterialTheme.colorScheme.onSurface
                 )
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(20.dp)) // Espaciado consistente
 
-                // Detalles rápidos
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                // Chips de info
+                FlowRow( // Usar FlowRow para un layout flexible de chips
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    DetailChip(
-                        label = "Categoría",
-                        value = juego.categoria
-                    )
-                    DetailChip(
+                    InfoChip(label = "Categoría", value = juego.categoria)
+                    InfoChip(
                         label = "Jugadores",
-                        value = "${juego.minJugadores}${juego.maxJugadores?.let { " - $it" } ?: "+"}"
+                        value = "${juego.minJugadores}${juego.maxJugadores?.let { " - $it" } ?: "+"} "
                     )
-                    DetailChip(
-                        label = "Bebidas",
-                        value = if (juego.esParaBeber) "Sí" else "No"
-                    )
+                    InfoChip(label = "Bebidas", value = if (juego.esParaBeber) "Sí" else "No")
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
+                Divider() // Separador para secciones
+                Spacer(modifier = Modifier.height(16.dp))
 
                 // Materiales
-                Text(
-                    text = "Materiales",
-                    style = MaterialTheme.typography.titleLarge.copy(
-                        fontWeight = FontWeight.Bold
-                    )
-                )
+                SectionTitle("Materiales") // Título de sección usando el composable SectionTitle
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = juego.materiales,
-                    style = MaterialTheme.typography.bodyMedium
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -101,8 +92,10 @@ fun JuegoDialog(
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer
-                        )
+                            containerColor = MaterialTheme.colorScheme.tertiaryContainer // Color coherente con el chip en la tarjeta
+                        ),
+                        shape = MaterialTheme.shapes.medium, // Forma del Card
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                     ) {
                         Column(
                             modifier = Modifier.padding(16.dp)
@@ -110,42 +103,45 @@ fun JuegoDialog(
                             Text(
                                 text = "¡Juego con bebidas!",
                                 style = MaterialTheme.typography.titleMedium.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                                    fontWeight = FontWeight.SemiBold, // Semibold para consistencia
+                                    color = MaterialTheme.colorScheme.onTertiaryContainer
                                 )
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
                                 text = "Recuerda beber con responsabilidad y respetar los límites de cada persona.",
                                 style = MaterialTheme.typography.bodyMedium.copy(
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                                    color = MaterialTheme.colorScheme.onTertiaryContainer
                                 )
                             )
                         }
                     }
                 }
+                Spacer(modifier = Modifier.height(20.dp))
             }
         }
     }
 }
 
+// Reutilizamos InfoChip y SectionTitle de recipes para consistencia
 @Composable
-private fun DetailChip(
-    label: String,
-    value: String
-) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+private fun InfoChip(label: String, value: String) {
+    AssistChip(
+        onClick = {},
+        label = {
+            Text("$label: $value")
+        },
+        shape = MaterialTheme.shapes.medium
+    )
+}
+
+@Composable
+private fun SectionTitle(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.titleMedium.copy(
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.primary
         )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodyLarge,
-            fontWeight = FontWeight.Medium
-        )
-    }
-} 
+    )
+}

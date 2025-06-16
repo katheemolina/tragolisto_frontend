@@ -22,15 +22,22 @@ class ChatViewModel : ViewModel() {
 
     private var messageId = 0
 
-    // Envía mensaje y recibe respuesta del backend
+    init {
+        // Mensaje inicial del bot
+        val mensajeBienvenida = Message(
+            id = messageId++,
+            text = "¡Hola! Soy Ferni, tu bartender virtual 🍸 ¿Qué ingredientes tenés hoy?",
+            role = "assistant"
+        )
+        _messages.value = listOf(mensajeBienvenida)
+    }
+
     fun enviarMensajeAlChat(texto: String) {
         if (texto.isBlank()) return
 
-        // Añadimos mensaje del usuario
         val nuevoMensajeUsuario = Message(id = messageId++, text = texto, role = "user")
         _messages.value = _messages.value + nuevoMensajeUsuario
 
-        // Lanzamos llamada a backend
         viewModelScope.launch {
             try {
                 val historialFerni = _messages.value.map {

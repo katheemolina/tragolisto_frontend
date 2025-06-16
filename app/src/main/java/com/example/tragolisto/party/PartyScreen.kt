@@ -4,8 +4,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -13,9 +15,11 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.tragolisto.data.model.JuegoFiesta
 import com.example.tragolisto.ui.viewmodel.JuegoDetalleUiState
@@ -33,13 +37,12 @@ fun PartyScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { 
+            CenterAlignedTopAppBar(
+                title = {
                     Text(
-                        "Modo Fiesta",
-                        style = MaterialTheme.typography.headlineMedium.copy(
-                            fontWeight = FontWeight.Bold
-                        )
+                        text = "Modo Fiesta",
+                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                        textAlign = TextAlign.Center
                     )
                 },
                 navigationIcon = {
@@ -60,16 +63,16 @@ fun PartyScreen(
         ) {
             when (uiState) {
                 is JuegosFiestaUiState.Loading -> {
-                    CircularProgressIndicator(
-                        modifier = Modifier.align(Alignment.Center)
-                    )
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
                 }
                 is JuegosFiestaUiState.Success -> {
                     val juegos = (uiState as JuegosFiestaUiState.Success).juegos
                     LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 16.dp), // Padding horizontal para las tarjetas
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        contentPadding = PaddingValues(top = 16.dp) // Padding superior para la lista
                     ) {
                         items(juegos) { juego ->
                             JuegoCard(
@@ -96,10 +99,7 @@ fun PartyScreen(
                             onClick = { viewModel.cargarJuegos() },
                             contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp)
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.Refresh,
-                                contentDescription = "Reintentar"
-                            )
+                            Icon(Icons.Default.Refresh, contentDescription = "Reintentar")
                             Spacer(modifier = Modifier.width(8.dp))
                             Text("Reintentar")
                         }
@@ -108,32 +108,39 @@ fun PartyScreen(
             }
 
             // Mostrar el diálogo de detalles del juego
-            when (juegoDetalleState) {
-                is JuegoDetalleUiState.Loading -> {
-                    CircularProgressIndicator(
-                        modifier = Modifier.align(Alignment.Center)
-                    )
+            if (juegoDetalleState is JuegoDetalleUiState.Success) {
+                val juego = (juegoDetalleState as JuegoDetalleUiState.Success).juego
+                Dialog(
+                    onDismissRequest = { viewModel.limpiarJuegoDetalle() }
+                ) {
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .fillMaxHeight(0.9f)
+                            .padding(16.dp),
+                        shape = MaterialTheme.shapes.large,
+                        tonalElevation = 6.dp
+                    ) {
+                        JuegoDialog(juego, { viewModel.limpiarJuegoDetalle() })
+                    }
                 }
-                is JuegoDetalleUiState.Success -> {
-                    val juego = (juegoDetalleState as JuegoDetalleUiState.Success).juego
-                    JuegoDialog(
-                        juego = juego,
-                        onDismiss = { viewModel.limpiarJuegoDetalle() }
-                    )
-                }
-                is JuegoDetalleUiState.Error -> {
-                    AlertDialog(
-                        onDismissRequest = { viewModel.limpiarJuegoDetalle() },
-                        title = { Text("Error") },
-                        text = { Text((juegoDetalleState as JuegoDetalleUiState.Error).message) },
-                        confirmButton = {
-                            TextButton(onClick = { viewModel.limpiarJuegoDetalle() }) {
-                                Text("OK")
-                            }
+            }
+
+            if (juegoDetalleState is JuegoDetalleUiState.Loading) {
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+            }
+
+            if (juegoDetalleState is JuegoDetalleUiState.Error) {
+                AlertDialog(
+                    onDismissRequest = { viewModel.limpiarJuegoDetalle() },
+                    title = { Text("Error") },
+                    text = { Text((juegoDetalleState as JuegoDetalleUiState.Error).message) },
+                    confirmButton = {
+                        TextButton(onClick = { viewModel.limpiarJuegoDetalle() }) {
+                            Text("OK")
                         }
-                    )
-                }
-                null -> { /* No dialog to show */ }
+                    }
+                )
             }
         }
     }
@@ -148,12 +155,16 @@ fun JuegoCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        ),
+        shape = MaterialTheme.shapes.large,
+        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(20.dp) // Aumenta el padding para que coincida con TragoCard
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -162,38 +173,57 @@ fun JuegoCard(
             ) {
                 Text(
                     text = juego.nombre,
-                    style = MaterialTheme.typography.titleLarge
+                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold), // Estilo consistente con TragoCard
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 if (juego.esParaBeber) {
                     AssistChip(
                         onClick = { },
                         label = { Text("Con bebidas") },
                         colors = AssistChipDefaults.assistChipColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer,
-                            labelColor = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
+                            containerColor = MaterialTheme.colorScheme.tertiaryContainer, // Usar un color más distintivo
+                            labelColor = MaterialTheme.colorScheme.onTertiaryContainer
+                        ),
+                        shape = RoundedCornerShape(50) // Forma de pastilla para el chip
                     )
                 }
             }
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = juego.descripcion,
-                style = MaterialTheme.typography.bodyMedium
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(12.dp)) // Espaciado consistente
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(
-                    text = "Categoría: ${juego.categoria}",
-                    style = MaterialTheme.typography.bodySmall
-                )
-                Text(
-                    text = "${juego.minJugadores}${juego.maxJugadores?.let { " - $it" } ?: "+"} jugadores",
-                    style = MaterialTheme.typography.bodySmall
+                // Usar el mismo componente AssistChip de TragoCard para consistencia
+                AssistChipCompact(label = "Categoría", value = juego.categoria)
+                AssistChipCompact(
+                    label = "Jugadores",
+                    value = "${juego.minJugadores}${juego.maxJugadores?.let { " - $it" } ?: "+"} "
                 )
             }
         }
     }
-} 
+}
+
+// Nuevo composable para chips compactos, similar a AssistChip de RecipesScreen
+@Composable
+fun AssistChipCompact(label: String, value: String) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.primary
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodySmall,
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+    }
+}
