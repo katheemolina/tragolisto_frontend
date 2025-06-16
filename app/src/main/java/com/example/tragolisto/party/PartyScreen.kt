@@ -7,16 +7,16 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -25,6 +25,9 @@ import com.example.tragolisto.data.model.JuegoFiesta
 import com.example.tragolisto.ui.viewmodel.JuegoDetalleUiState
 import com.example.tragolisto.ui.viewmodel.JuegosFiestaUiState
 import com.example.tragolisto.ui.viewmodel.JuegosFiestaViewModel
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.background
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -34,6 +37,25 @@ fun PartyScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val juegoDetalleState by viewModel.juegoDetalleState.collectAsState()
+
+    var categoriaSeleccionada by rememberSaveable { mutableStateOf("Todas") }
+    var soloParaBeber by rememberSaveable { mutableStateOf(false) }
+    var busqueda by rememberSaveable(stateSaver = TextFieldValue.Saver) { mutableStateOf(TextFieldValue("")) }
+
+    val categoriasConEmojis = mapOf(
+        "Todas" to "📚 Todas",
+        "Al azar" to "🎲 Al azar",
+        "Con elementos" to "🎯 Con elementos",
+        "Creativo" to "🎨 Creativo",
+        "De adivinanzas" to "🧠 De adivinanzas",
+        "De cata" to "🍷 De cata",
+        "De comunicación" to "🗣️ De comunicación",
+        "De desafío" to "⚔️ De desafío",
+        "De preguntas" to "❓ De preguntas",
+        "De reglas" to "📜 De reglas",
+        "Físico" to "🏃‍♂️ Físico",
+        "Musical" to "🎵 Musical"
+    )
 
     Scaffold(
         topBar = {
@@ -65,23 +87,93 @@ fun PartyScreen(
                 is JuegosFiestaUiState.Loading -> {
                     CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
                 }
+
                 is JuegosFiestaUiState.Success -> {
-                    val juegos = (uiState as JuegosFiestaUiState.Success).juegos
-                    LazyColumn(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(horizontal = 16.dp), // Padding horizontal para las tarjetas
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                        contentPadding = PaddingValues(top = 16.dp) // Padding superior para la lista
-                    ) {
-                        items(juegos) { juego ->
-                            JuegoCard(
-                                juego = juego,
-                                onClick = { viewModel.cargarJuegoDetalle(juego.id) }
+                    var juegos = (uiState as JuegosFiestaUiState.Success).juegos
+
+                    juegos = juegos.filter {
+                        (categoriaSeleccionada == "Todas" || it.categoria.equals(categoriaSeleccionada, ignoreCase = true)) &&
+                                (!soloParaBeber || it.esParaBeber) &&
+                                (busqueda.text.isBlank() || it.nombre.contains(busqueda.text, ignoreCase = true))
+                    }
+
+                    Column(modifier = Modifier.fillMaxSize()) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            OutlinedTextField(
+                                value = busqueda,
+                                onValueChange = { busqueda = it },
+                                modifier = Modifier.fillMaxWidth(),
+                                placeholder = { Text("Buscar juego...") },
+                                singleLine = true,
+                                shape = RoundedCornerShape(12.dp)
                             )
+
+                            Spacer(modifier = Modifier.height(12.dp))
+
+                            // FILTROS DE CATEGORÍA EN SCROLL HORIZONTAL
+                            Box(modifier = Modifier.fillMaxWidth()) {
+                                val scrollState = rememberScrollState()
+                                Row(
+                                    modifier = Modifier
+                                        .horizontalScroll(scrollState)
+                                        .padding(end = 32.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    categoriasConEmojis.forEach { (categoria, emojiText) ->
+                                        FilterToggleButton(
+                                            text = emojiText,
+                                            selected = categoriaSeleccionada == categoria,
+                                            onClick = { categoriaSeleccionada = categoria }
+                                        )
+                                    }
+                                }
+
+                                // FADE LATERAL DERECHO
+                                Box(
+                                    modifier = Modifier
+                                        .matchParentSize()
+                                        .background(
+                                            Brush.horizontalGradient(
+                                                colors = listOf(Color.Transparent, MaterialTheme.colorScheme.background),
+                                                startX = 200f,
+                                                endX = Float.POSITIVE_INFINITY
+                                            )
+                                        )
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(12.dp))
+
+                            // FILTRO "PARA BEBER"
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.Center
+                            ) {
+                                FilterToggleButton(
+                                    text = "🍻 Para beber",
+                                    selected = soloParaBeber,
+                                    onClick = { soloParaBeber = !soloParaBeber }
+                                )
+                            }
+                        }
+
+                        LazyColumn(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(horizontal = 16.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            items(juegos) { juego ->
+                                JuegoCard(
+                                    juego = juego,
+                                    onClick = { viewModel.cargarJuegoDetalle(juego.id) },
+                                    emojiCategoria = categoriasConEmojis[juego.categoria] ?: juego.categoria
+                                )
+                            }
                         }
                     }
                 }
+
                 is JuegosFiestaUiState.Error -> {
                     Column(
                         modifier = Modifier
@@ -107,12 +199,10 @@ fun PartyScreen(
                 }
             }
 
-            // Mostrar el diálogo de detalles del juego
+            // Diálogo
             if (juegoDetalleState is JuegoDetalleUiState.Success) {
                 val juego = (juegoDetalleState as JuegoDetalleUiState.Success).juego
-                Dialog(
-                    onDismissRequest = { viewModel.limpiarJuegoDetalle() }
-                ) {
+                Dialog(onDismissRequest = { viewModel.limpiarJuegoDetalle() }) {
                     Surface(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -147,83 +237,57 @@ fun PartyScreen(
 }
 
 @Composable
-fun JuegoCard(
-    juego: JuegoFiesta,
+fun FilterToggleButton(
+    text: String,
+    selected: Boolean,
     onClick: () -> Unit
 ) {
+    val colors = if (selected) {
+        ButtonDefaults.filledTonalButtonColors()
+    } else {
+        ButtonDefaults.outlinedButtonColors()
+    }
+
+    val border = if (selected) null else ButtonDefaults.outlinedButtonBorder
+
+    Button(
+        onClick = onClick,
+        colors = colors,
+        border = border,
+        shape = RoundedCornerShape(50),
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+    ) {
+        Text(text)
+    }
+}
+
+@Composable
+fun JuegoCard(juego: JuegoFiesta, onClick: () -> Unit, emojiCategoria: String) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        ),
-        shape = MaterialTheme.shapes.large,
-        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(4.dp)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(20.dp) // Aumenta el padding para que coincida con TragoCard
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = juego.nombre,
-                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold), // Estilo consistente con TragoCard
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                if (juego.esParaBeber) {
-                    AssistChip(
-                        onClick = { },
-                        label = { Text("Con bebidas") },
-                        colors = AssistChipDefaults.assistChipColors(
-                            containerColor = MaterialTheme.colorScheme.tertiaryContainer, // Usar un color más distintivo
-                            labelColor = MaterialTheme.colorScheme.onTertiaryContainer
-                        ),
-                        shape = RoundedCornerShape(50) // Forma de pastilla para el chip
-                    )
-                }
-            }
-            Spacer(modifier = Modifier.height(8.dp))
+        Column(modifier = Modifier.padding(16.dp)) {
             Text(
-                text = juego.descripcion,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                text = juego.nombre,
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
             )
-            Spacer(modifier = Modifier.height(12.dp)) // Espaciado consistente
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                // Usar el mismo componente AssistChip de TragoCard para consistencia
-                AssistChipCompact(label = "Categoría", value = juego.categoria)
-                AssistChipCompact(
-                    label = "Jugadores",
-                    value = "${juego.minJugadores}${juego.maxJugadores?.let { " - $it" } ?: "+"} "
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "Categoría: $emojiCategoria",
+                style = MaterialTheme.typography.bodyMedium
+            )
+            if (juego.esParaBeber) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "🍻 Para beber",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary
                 )
             }
         }
-    }
-}
-
-// Nuevo composable para chips compactos, similar a AssistChip de RecipesScreen
-@Composable
-fun AssistChipCompact(label: String, value: String) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.primary
-        )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodySmall,
-            fontWeight = FontWeight.Medium,
-            color = MaterialTheme.colorScheme.onSurface
-        )
     }
 }

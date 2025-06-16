@@ -17,6 +17,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
@@ -28,6 +29,8 @@ import com.example.tragolisto.data.model.Trago
 import com.example.tragolisto.ui.viewmodel.TragoDetalleUiState
 import com.example.tragolisto.ui.viewmodel.TragosUiState
 import com.example.tragolisto.ui.viewmodel.TragosViewModel
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,7 +45,12 @@ fun RecipesScreen(
     var soloSinAlcohol by rememberSaveable { mutableStateOf(false) }
     var busqueda by rememberSaveable(stateSaver = TextFieldValue.Saver) { mutableStateOf(TextFieldValue("")) }
 
-    val dificultades = listOf("Todas", "Fácil", "Media", "Difícil")
+    val dificultadesConEmojis = mapOf(
+        "Todas" to "✨ Todas",
+        "Fácil" to "👶 Fácil",
+        "Media" to "🧑‍🔧 Media",
+        "Difícil" to "🤯 Difícil"
+    )
 
     Scaffold(
         topBar = {
@@ -97,25 +105,47 @@ fun RecipesScreen(
 
                             Spacer(modifier = Modifier.height(12.dp))
 
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                dificultades.forEach { dificultad ->
-                                    val seleccionado = dificultadSeleccionada == dificultad
-                                    FilterToggleButton(
-                                        text = dificultad,
-                                        selected = seleccionado,
-                                        onClick = { dificultadSeleccionada = dificultad }
-                                    )
+                            // FILTROS DE DIFICULTAD EN SCROLL HORIZONTAL
+                            Box(modifier = Modifier.fillMaxWidth()) {
+                                val scrollState = rememberScrollState()
+                                Row(
+                                    modifier = Modifier
+                                        .horizontalScroll(scrollState)
+                                        .padding(end = 32.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    dificultadesConEmojis.forEach { (dificultad, emojiText) ->
+                                        FilterToggleButton(
+                                            text = emojiText,
+                                            selected = dificultadSeleccionada == dificultad,
+                                            onClick = { dificultadSeleccionada = dificultad }
+                                        )
+                                    }
                                 }
+
+                                // FADE LATERAL DERECHO
+                                Box(
+                                    modifier = Modifier
+                                        .matchParentSize()
+                                        .background(
+                                            Brush.horizontalGradient(
+                                                colors = listOf(Color.Transparent, MaterialTheme.colorScheme.background),
+                                                startX = 200f,
+                                                endX = Float.POSITIVE_INFINITY
+                                            )
+                                        )
+                                )
                             }
 
-                            Spacer(modifier = Modifier.height(8.dp))
+                            Spacer(modifier = Modifier.height(12.dp))
 
-                            Row {
+                            // FILTRO "SIN ALCOHOL"
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.Center
+                            ) {
                                 FilterToggleButton(
-                                    text = "Sin alcohol",
+                                    text = "🚫 Sin alcohol", // Added emoji for consistency
                                     selected = soloSinAlcohol,
                                     onClick = { soloSinAlcohol = !soloSinAlcohol }
                                 )
@@ -169,8 +199,6 @@ fun RecipesScreen(
                 Dialog(
                     onDismissRequest = { viewModel.limpiarTragoDetalle() }
                 ) {
-                    // You can apply your animations here if you want custom ones for the dialog content
-                    // However, Dialog itself handles its entry/exit animations by default.
                     Surface(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -183,7 +211,6 @@ fun RecipesScreen(
                     }
                 }
             }
-
 
             if (tragoDetalleState is TragoDetalleUiState.Loading) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
@@ -290,29 +317,3 @@ fun AssistChip(label: String, value: String) {
         )
     }
 }
-
-// You no longer need this composable
-// @Composable
-// fun TragoDialogOverlay(
-//    trago: Trago,
-//    onDismiss: () -> Unit
-// ) {
-//    Box(
-//        modifier = Modifier
-//            .fillMaxSize()
-//            .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.6f))
-//            .clickable(onClick = onDismiss),
-//        contentAlignment = Alignment.Center
-//    ) {
-//        Surface(
-//            modifier = Modifier
-//                .fillMaxWidth()
-//                .fillMaxHeight(0.9f)
-//                .padding(16.dp),
-//            shape = MaterialTheme.shapes.large,
-//            tonalElevation = 6.dp
-//        ) {
-//            TragoDialog(trago, onDismiss)
-//        }
-//    }
-// }
