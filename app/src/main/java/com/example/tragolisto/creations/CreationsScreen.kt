@@ -7,25 +7,33 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.Alignment
-import androidx.compose.material.icons.filled.Delete
-
-data class Trago(val nombre: String, val descripcion: String, val ingredientes: String)
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.tragolisto.data.local.AppDatabase
+import com.example.tragolisto.data.local.TragoLocal
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreationsScreen(
     onBackClick: () -> Unit
 ) {
+    val context = LocalContext.current
+    val db = remember { AppDatabase.DatabaseProvider.getDatabase(context) }
+    val viewModel: TragoLocalViewModel = viewModel(
+        factory = TragoLocalViewModelFactory(db.dao)
+    )
+
     var showDialog by remember { mutableStateOf(false) }
-    var creaciones by remember { mutableStateOf(listOf<Trago>()) }
-    var tragoSeleccionado by remember { mutableStateOf<Trago?>(null) }
+    val creaciones by viewModel.tragos.collectAsState()
+    var tragoSeleccionado by remember { mutableStateOf<TragoLocal?>(null) }
 
     Scaffold(
         topBar = {
@@ -86,7 +94,9 @@ fun CreationsScreen(
                 CreateDrinkDialog(
                     onDismiss = { showDialog = false },
                     onConfirm = { nombre, descripcion, ingredientes ->
-                        creaciones = creaciones + Trago(nombre, descripcion, ingredientes)
+                        viewModel.agregarTrago(
+                            TragoLocal(0, nombre, descripcion, ingredientes)
+                        )
                         showDialog = false
                     }
                 )
@@ -97,7 +107,7 @@ fun CreationsScreen(
                     trago = tragoSeleccionado!!,
                     onDismiss = { tragoSeleccionado = null },
                     onDelete = {
-                        creaciones = creaciones - tragoSeleccionado!!
+                        viewModel.eliminarTrago(tragoSeleccionado!!)
                         tragoSeleccionado = null
                     }
                 )
@@ -163,7 +173,7 @@ fun CreateDrinkDialog(
                                 ingredienteActual = ""
                             }
                         },
-                        modifier = Modifier.size(56.dp) // para alinear con el TextField
+                        modifier = Modifier.size(56.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Default.Add,
@@ -184,7 +194,7 @@ fun CreateDrinkDialog(
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .heightIn(max = 150.dp) // Altura máxima con scroll
+                                .heightIn(max = 150.dp)
                         ) {
                             LazyColumn {
                                 items(ingredientesList) { item ->
@@ -237,7 +247,7 @@ fun CreateDrinkDialog(
 
 @Composable
 fun TragoDetailDialog(
-    trago: Trago,
+    trago: TragoLocal,
     onDismiss: () -> Unit,
     onDelete: () -> Unit
 ) {
@@ -293,7 +303,6 @@ fun TragoDetailDialog(
                 }
             }
         },
-        // Desactivar confirm/dismissButton para que no se agreguen por defecto
         confirmButton = {},
         dismissButton = {}
     )
