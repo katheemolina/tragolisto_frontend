@@ -88,11 +88,11 @@ fun HomeScreen(
         )
 
         HomeCard(
-            title = "Mis favoritos",
-            description = "Accede rápidamente a tus recetas guardadas",
-            icon = painterResource(id = R.drawable.ic_favoritos),
-            onClick = onFavoritesClick,
-            backgroundColor = Color(0xFFFFEBEE) // rosa claro
+            title = "Recetas",
+            description = "Explora nuestra colección de cócteles clásicos y modernos",
+            icon = painterResource(id = R.drawable.ic_recetas),
+            onClick = onRecipesClick,
+            backgroundColor = Color(0xFFE8F5E9) // verde claro
         )
 
         HomeCard(
@@ -104,11 +104,11 @@ fun HomeScreen(
         )
 
         HomeCard(
-            title = "Recetas",
-            description = "Explora nuestra colección de cócteles clásicos y modernos",
-            icon = painterResource(id = R.drawable.ic_recetas),
-            onClick = onRecipesClick,
-            backgroundColor = Color(0xFFE8F5E9) // verde claro
+            title = "Mis favoritos",
+            description = "Accede rápidamente a tus recetas guardadas",
+            icon = painterResource(id = R.drawable.ic_favoritos),
+            onClick = onFavoritesClick,
+            backgroundColor = Color(0xFFFFEBEE) // rosa claro
         )
 
         HomeCard(

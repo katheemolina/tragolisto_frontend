@@ -129,7 +129,7 @@ fun TragoDialog(
 }
 
 @Composable
-private fun InfoChip(label: String, value: String) {
+fun InfoChip(label: String, value: String) {
     AssistChip(
         onClick = {},
         label = {
@@ -140,7 +140,7 @@ private fun InfoChip(label: String, value: String) {
 }
 
 @Composable
-private fun SectionTitle(text: String) {
+fun SectionTitle(text: String) {
     Text(
         text = text,
         style = MaterialTheme.typography.titleMedium.copy(
