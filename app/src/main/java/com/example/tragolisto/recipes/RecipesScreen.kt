@@ -12,6 +12,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -26,11 +28,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog // Import Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.tragolisto.data.model.Trago
+import com.example.tragolisto.ui.viewmodel.FavoritoUiState
 import com.example.tragolisto.ui.viewmodel.TragoDetalleUiState
 import com.example.tragolisto.ui.viewmodel.TragosUiState
 import com.example.tragolisto.ui.viewmodel.TragosViewModel
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,6 +44,8 @@ fun RecipesScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val tragoDetalleState by viewModel.tragoDetalleState.collectAsState()
+    val favoritoState by viewModel.favoritoState.collectAsState()
+    val tragosFavoritos by viewModel.tragosFavoritos.collectAsState()
 
     var dificultadSeleccionada by rememberSaveable { mutableStateOf("Todas") }
     var soloSinAlcohol by rememberSaveable { mutableStateOf(false) }
@@ -51,6 +57,30 @@ fun RecipesScreen(
         "Media" to "🧑‍🔧 Media",
         "Difícil" to "🤯 Difícil"
     )
+
+    // Snackbar para mostrar mensajes de favoritos
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    // Observar cambios en el estado de favoritos
+    LaunchedEffect(favoritoState) {
+        when (favoritoState) {
+            is FavoritoUiState.Success -> {
+                snackbarHostState.showSnackbar(
+                    message = (favoritoState as FavoritoUiState.Success).message,
+                    duration = SnackbarDuration.Short
+                )
+                viewModel.limpiarFavoritoState()
+            }
+            is FavoritoUiState.Error -> {
+                snackbarHostState.showSnackbar(
+                    message = (favoritoState as FavoritoUiState.Error).message,
+                    duration = SnackbarDuration.Short
+                )
+                viewModel.limpiarFavoritoState()
+            }
+            else -> {}
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -71,7 +101,8 @@ fun RecipesScreen(
                     }
                 }
             )
-        }
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
         Box(
             modifier = Modifier
@@ -161,6 +192,8 @@ fun RecipesScreen(
                             items(tragos) { trago ->
                                 TragoCard(
                                     trago = trago,
+                                    esFavorito = tragosFavoritos.contains(trago.id),
+                                    onFavoritoClick = { viewModel.agregarFavorito(trago.id) },
                                     onClick = { viewModel.cargarTragoDetalle(trago.id) }
                                 )
                             }
@@ -260,6 +293,8 @@ fun FilterToggleButton(
 @Composable
 fun TragoCard(
     trago: Trago,
+    esFavorito: Boolean,
+    onFavoritoClick: () -> Unit,
     onClick: () -> Unit
 ) {
     Card(
@@ -272,30 +307,51 @@ fun TragoCard(
         shape = MaterialTheme.shapes.large,
         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
     ) {
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(20.dp)
         ) {
-            Text(
-                text = trago.nombre,
-                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = trago.descripcion,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+            // Botón de estrella en la esquina superior derecha
+            IconButton(
+                onClick = onFavoritoClick,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .size(32.dp)
             ) {
-                AssistChip(label = "Dificultad", value = trago.dificultad)
-                AssistChip(label = "Tiempo", value = "${trago.tiempoPreparacionMinutos} min")
-                AssistChip(label = "Alcohol", value = if (trago.esAlcoholico) "Sí" else "No")
+                Icon(
+                    imageVector = if (esFavorito) Icons.Filled.Star else Icons.Outlined.Star,
+                    contentDescription = if (esFavorito) "Quitar de favoritos" else "Agregar a favoritos",
+                    tint = if (esFavorito) Color(0xFFFFD700) else MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(end = 40.dp) // Espacio para el botón de estrella
+            ) {
+                Text(
+                    text = trago.nombre,
+                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = trago.descripcion,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    AssistChip(label = "Dificultad", value = trago.dificultad)
+                    AssistChip(label = "Tiempo", value = "${trago.tiempoPreparacionMinutos} min")
+                    AssistChip(label = "Alcohol", value = if (trago.esAlcoholico) "Sí" else "No")
+                }
             }
         }
     }
