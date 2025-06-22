@@ -51,7 +51,6 @@ class TragosViewModel(
     val tragosFavoritos: StateFlow<Set<Int>> = _tragosFavoritos.asStateFlow()
 
     init {
-        Log.d(TAG, "Initializing TragosViewModel")
         cargarTragos()
         cargarFavoritos()
     }
@@ -60,18 +59,13 @@ class TragosViewModel(
         viewModelScope.launch {
             _uiState.value = TragosUiState.Loading
             try {
-                Log.d(TAG, "Intentando cargar tragos...")
                 val tragosResponse = repository.getTragos()
-                Log.d(TAG, "Tragos cargados exitosamente: ${tragosResponse.total} tragos")
                 _uiState.value = TragosUiState.Success(tragosResponse.tragos)
             } catch (e: UnknownHostException) {
-                Log.e(TAG, "No se pudo conectar al servidor. Verifica tu conexión a internet.", e)
                 _uiState.value = TragosUiState.Error("No se pudo conectar al servidor. Verifica tu conexión a internet.")
             } catch (e: SocketTimeoutException) {
-                Log.e(TAG, "La conexión al servidor tardó demasiado. Intenta de nuevo.", e)
                 _uiState.value = TragosUiState.Error("La conexión al servidor tardó demasiado. Intenta de nuevo.")
             } catch (e: Exception) {
-                Log.e(TAG, "Error al cargar tragos", e)
                 _uiState.value = TragosUiState.Error("Error al cargar los tragos: ${e.message}")
             }
         }
@@ -100,17 +94,13 @@ class TragosViewModel(
     fun cargarFavoritos() {
         val userId = usuarioglobal?.id_usuario
         if (userId == null) {
-            Log.e(TAG, "No se pudo obtener el ID del usuario")
             return
         }
 
         ClientApi.obtenerFavoritos(userId) { favoritos, error ->
             if (favoritos != null) {
-                val favoritosIds = favoritos.map { it.id }.toSet()
+                val favoritosIds = favoritos.map { it.trago_id }.toSet()
                 _tragosFavoritos.value = favoritosIds
-                Log.d(TAG, "Favoritos cargados: ${favoritosIds.size} tragos")
-            } else {
-                Log.e(TAG, "Error al cargar favoritos: $error")
             }
         }
     }
@@ -126,8 +116,7 @@ class TragosViewModel(
 
         ClientApi.agregarFavorito(userId, tragoId) { success, message ->
             if (success) {
-                _favoritoState.value = FavoritoUiState.Success(message ?: "Guardado correctamente")
-                // Agregar el trago a la lista de favoritos
+                _favoritoState.value = FavoritoUiState.Success("Se agregó correctamente a favoritos")
                 _tragosFavoritos.value = _tragosFavoritos.value + tragoId
             } else {
                 _favoritoState.value = FavoritoUiState.Error(message ?: "Error al agregar favorito")
@@ -137,9 +126,5 @@ class TragosViewModel(
 
     fun limpiarFavoritoState() {
         _favoritoState.value = FavoritoUiState.Idle
-    }
-
-    fun esFavorito(tragoId: Int): Boolean {
-        return _tragosFavoritos.value.contains(tragoId)
     }
 } 

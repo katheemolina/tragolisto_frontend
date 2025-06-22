@@ -181,7 +181,7 @@ object ClientApi {
         })
     }
 
-    fun obtenerFavoritos(userId: Int, callback: (List<Trago>?, String?) -> Unit) {
+    fun obtenerFavoritos(userId: Int, callback: (List<FavoritoResponse>?, String?) -> Unit) {
         val backendUrl = "$BASE_URL/api/favoritos/$userId"
         
         val request = Request.Builder()
@@ -197,13 +197,11 @@ object ClientApi {
 
             override fun onResponse(call: Call, response: Response) {
                 val responseData = response.body?.string()
-                Log.d("ClientApi", "Respuesta de favoritos: $responseData")
 
                 if (response.isSuccessful && responseData != null) {
                     try {
                         val favoritosResponse = gson.fromJson(responseData, Array<FavoritoResponse>::class.java)
-                        val tragos = favoritosResponse.map { it.trago }
-                        callback(tragos, null)
+                        callback(favoritosResponse.toList(), null)
                     } catch (e: Exception) {
                         Log.e("ClientApi", "Error al parsear respuesta de favoritos", e)
                         callback(null, "Error al parsear respuesta: ${e.localizedMessage}")

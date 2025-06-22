@@ -14,6 +14,7 @@ data class Ingrediente(
     val id: Int,
     val nombre: String,
     @SerializedName("es_alcohol")
+    @com.google.gson.annotations.JsonAdapter(BooleanDeserializer::class)
     val esAlcohol: Boolean,
     val categoria: String,
     @SerializedName("created_at")
@@ -41,6 +42,7 @@ data class Trago(
     val tips: String,
     val historia: String,
     @SerializedName("es_alcoholico")
+    @com.google.gson.annotations.JsonAdapter(BooleanDeserializer::class)
     val esAlcoholico: Boolean,
     @SerializedName("imagen_url")
     val imagenUrl: String?,

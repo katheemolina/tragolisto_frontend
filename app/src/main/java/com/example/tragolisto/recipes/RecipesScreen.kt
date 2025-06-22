@@ -25,7 +25,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog // Import Dialog
+import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.tragolisto.data.model.Trago
 import com.example.tragolisto.ui.viewmodel.FavoritoUiState
@@ -34,7 +34,6 @@ import com.example.tragolisto.ui.viewmodel.TragosUiState
 import com.example.tragolisto.ui.viewmodel.TragosViewModel
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
-import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -190,9 +189,10 @@ fun RecipesScreen(
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             items(tragos) { trago ->
+                                val esFavorito = tragosFavoritos.contains(trago.id)
                                 TragoCard(
                                     trago = trago,
-                                    esFavorito = tragosFavoritos.contains(trago.id),
+                                    esFavorito = esFavorito,
                                     onFavoritoClick = { viewModel.agregarFavorito(trago.id) },
                                     onClick = { viewModel.cargarTragoDetalle(trago.id) }
                                 )
