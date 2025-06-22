@@ -1,9 +1,11 @@
 package com.example.tragolisto.favorites
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.tragolisto.data.api.ClientApi
 import com.example.tragolisto.data.global.usuarioglobal
+import com.example.tragolisto.data.model.FavoritoResponse
 import com.example.tragolisto.data.model.Trago
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -12,8 +14,14 @@ import kotlinx.coroutines.launch
 
 sealed class FavoritosUiState {
     data object Loading : FavoritosUiState()
-    data class Success(val favoritos: List<Trago>) : FavoritosUiState()
+    data class Success(val favoritos: List<FavoritoResponse>) : FavoritosUiState()
     data class Error(val message: String) : FavoritosUiState()
+}
+
+sealed class FavoritoActionState {
+    data object Idle : FavoritoActionState()
+    data class Success(val message: String) : FavoritoActionState()
+    data class Error(val message: String) : FavoritoActionState()
 }
 
 sealed class TragoDetalleUiState {
@@ -28,6 +36,9 @@ class FavoritesViewModel : ViewModel() {
 
     private val _tragoDetalleState = MutableStateFlow<TragoDetalleUiState?>(null)
     val tragoDetalleState: StateFlow<TragoDetalleUiState?> = _tragoDetalleState.asStateFlow()
+
+    private val _actionState = MutableStateFlow<FavoritoActionState>(FavoritoActionState.Idle)
+    val actionState: StateFlow<FavoritoActionState> = _actionState.asStateFlow()
 
     init {
         cargarFavoritos()
@@ -45,9 +56,7 @@ class FavoritesViewModel : ViewModel() {
 
                 ClientApi.obtenerFavoritos(userId) { favoritosResponse, error ->
                     if (favoritosResponse != null) {
-                        // Extraer solo los tragos de la respuesta
-                        val tragos = favoritosResponse.map { it.trago }
-                        _uiState.value = FavoritosUiState.Success(tragos)
+                        _uiState.value = FavoritosUiState.Success(favoritosResponse)
                     } else {
                         _uiState.value = FavoritosUiState.Error(error ?: "Error desconocido")
                     }
@@ -56,6 +65,26 @@ class FavoritesViewModel : ViewModel() {
                 _uiState.value = FavoritosUiState.Error(e.message ?: "Error desconocido")
             }
         }
+    }
+
+    fun eliminarFavorito(favoritoId: Int, tragoId: Int) {
+        ClientApi.eliminarFavorito(favoritoId) { success, message ->
+            if (success) {
+                // Si se elimina correctamente, actualizamos la lista en la UI
+                val currentState = _uiState.value
+                if (currentState is FavoritosUiState.Success) {
+                    val nuevaLista = currentState.favoritos.filterNot { it.id == favoritoId }
+                    _uiState.value = FavoritosUiState.Success(nuevaLista)
+                }
+                _actionState.value = FavoritoActionState.Success(message ?: "Eliminado correctamente")
+            } else {
+                _actionState.value = FavoritoActionState.Error(message ?: "Error al eliminar")
+            }
+        }
+    }
+
+    fun limpiarActionState() {
+        _actionState.value = FavoritoActionState.Idle
     }
 
     fun cargarTragoDetalle(tragoId: Int) {

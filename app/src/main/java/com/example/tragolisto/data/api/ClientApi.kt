@@ -5,6 +5,7 @@ import android.os.Looper
 import android.util.Log
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
+import com.example.tragolisto.data.model.FavoritoResponse
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.MediaType.Companion.toMediaType
@@ -37,16 +38,6 @@ object ClientApi {
         val id_usuario: Int,
         val fecha_nacimiento: String?,
         val requiere_onboarding: Boolean
-    )
-
-    data class FavoritoResponse(
-        val id: Int,
-        val user_id: Int,
-        val trago_id: Int,
-        val created_at: String,
-        val updated_at: String,
-        val deleted_at: String?,
-        val trago: Trago
     )
 
     fun sendGoogleLoginData(idToken: String, uid: String?, email: String?, name: String, callback: (Boolean, String?) -> Unit) {
