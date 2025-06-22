@@ -247,4 +247,58 @@ object ClientApi {
             }
         })
     }
+
+    fun agregarFavorito(userId: Int, tragoId: Int, callback: (Boolean, String?) -> Unit) {
+        val backendUrl = "$BASE_URL/api/favoritos"
+        
+        val jsonBody = """
+            {
+                "user_id": $userId,
+                "trago_id": $tragoId
+            }
+        """.trimIndent()
+
+        val requestBody = jsonBody.toRequestBody(MEDIA_TYPE_JSON)
+
+        val request = Request.Builder()
+            .url(backendUrl)
+            .post(requestBody)
+            .build()
+
+        client.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                Log.e("ClientApi", "Error al agregar favorito", e)
+                Handler(Looper.getMainLooper()).post {
+                    callback(false, "Error de red: ${e.localizedMessage}")
+                }
+            }
+
+            override fun onResponse(call: Call, response: Response) {
+                val responseData = response.body?.string()
+                Log.d("ClientApi", "Respuesta de agregar favorito: $responseData")
+
+                Handler(Looper.getMainLooper()).post {
+                    if (response.isSuccessful && responseData != null) {
+                        try {
+                            val jsonResponse = JSONObject(responseData)
+                            if (jsonResponse.has("status") && jsonResponse.getBoolean("status")) {
+                                callback(true, jsonResponse.optString("message", "Guardado correctamente"))
+                            } else if (jsonResponse.has("error")) {
+                                val error = jsonResponse.getJSONObject("error")
+                                val message = error.optString("message", "Error al agregar favorito")
+                                callback(false, message)
+                            } else {
+                                callback(false, "Respuesta inesperada del servidor")
+                            }
+                        } catch (e: JSONException) {
+                            Log.e("ClientApi", "Error parseando respuesta de agregar favorito: ${e.message}")
+                            callback(false, "Error al procesar respuesta del servidor")
+                        }
+                    } else {
+                        callback(false, "Error de servidor: ${response.code} - $responseData")
+                    }
+                }
+            }
+        })
+    }
 }
