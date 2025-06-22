@@ -43,9 +43,11 @@ class FavoritesViewModel : ViewModel() {
                     return@launch
                 }
 
-                ClientApi.obtenerFavoritos(userId) { favoritos, error ->
-                    if (favoritos != null) {
-                        _uiState.value = FavoritosUiState.Success(favoritos)
+                ClientApi.obtenerFavoritos(userId) { favoritosResponse, error ->
+                    if (favoritosResponse != null) {
+                        // Extraer solo los tragos de la respuesta
+                        val tragos = favoritosResponse.map { it.trago }
+                        _uiState.value = FavoritosUiState.Success(tragos)
                     } else {
                         _uiState.value = FavoritosUiState.Error(error ?: "Error desconocido")
                     }

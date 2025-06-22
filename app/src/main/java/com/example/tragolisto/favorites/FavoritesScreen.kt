@@ -90,6 +90,8 @@ fun FavoritesScreen(
                             items(favoritos) { trago ->
                                 TragoCard(
                                     trago = trago,
+                                    esFavorito = true,
+                                    onFavoritoClick = { /* No hacer nada en favoritos */ },
                                     onClick = { viewModel.cargarTragoDetalle(trago.id) }
                                 )
                             }
