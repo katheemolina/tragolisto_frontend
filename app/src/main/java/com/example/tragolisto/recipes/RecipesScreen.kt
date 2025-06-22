@@ -193,7 +193,7 @@ fun RecipesScreen(
                                 TragoCard(
                                     trago = trago,
                                     esFavorito = esFavorito,
-                                    onFavoritoClick = { viewModel.agregarFavorito(trago.id) },
+                                    onFavoritoClick = { viewModel.toggleFavorito(trago.id) },
                                     onClick = { viewModel.cargarTragoDetalle(trago.id) }
                                 )
                             }

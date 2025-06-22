@@ -299,4 +299,36 @@ object ClientApi {
             }
         })
     }
+
+    fun eliminarFavorito(favoritoId: Int, callback: (Boolean, String?) -> Unit) {
+        val backendUrl = "$BASE_URL/api/favoritos/$favoritoId"
+
+        val request = Request.Builder()
+            .url(backendUrl)
+            .delete()
+            .build()
+
+        client.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                Log.e("ClientApi", "Error al eliminar favorito", e)
+                Handler(Looper.getMainLooper()).post {
+                    callback(false, "Error de red: ${e.localizedMessage}")
+                }
+            }
+
+            override fun onResponse(call: Call, response: Response) {
+                val responseData = response.body?.string()
+                Log.d("ClientApi", "Respuesta de eliminar favorito: $responseData")
+
+                Handler(Looper.getMainLooper()).post {
+                    if (response.isSuccessful) {
+                        callback(true, "Eliminado de favoritos")
+                    } else {
+                        // Aquí podrías intentar parsear un JSON de error si tu API lo envía
+                        callback(false, "Error al eliminar: ${response.code}")
+                    }
+                }
+            }
+        })
+    }
 }
