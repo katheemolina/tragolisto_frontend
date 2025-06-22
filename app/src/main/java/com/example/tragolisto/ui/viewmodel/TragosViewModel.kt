@@ -3,6 +3,8 @@ package com.example.tragolisto.ui.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.tragolisto.data.api.ClientApi
+import com.example.tragolisto.data.global.usuarioglobal
 import com.example.tragolisto.data.model.Trago
 import com.example.tragolisto.data.repository.TragosRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,6 +26,13 @@ sealed class TragoDetalleUiState {
     data class Error(val message: String) : TragoDetalleUiState()
 }
 
+sealed class FavoritoUiState {
+    object Idle : FavoritoUiState()
+    object Loading : FavoritoUiState()
+    data class Success(val message: String) : FavoritoUiState()
+    data class Error(val message: String) : FavoritoUiState()
+}
+
 class TragosViewModel(
     private val repository: TragosRepository = TragosRepository()
 ) : ViewModel() {
@@ -34,9 +43,17 @@ class TragosViewModel(
     private val _tragoDetalleState = MutableStateFlow<TragoDetalleUiState?>(null)
     val tragoDetalleState: StateFlow<TragoDetalleUiState?> = _tragoDetalleState.asStateFlow()
 
+    private val _favoritoState = MutableStateFlow<FavoritoUiState>(FavoritoUiState.Idle)
+    val favoritoState: StateFlow<FavoritoUiState> = _favoritoState.asStateFlow()
+
+    // Set para mantener track de los tragos favoritos
+    private val _tragosFavoritos = MutableStateFlow<Set<Int>>(emptySet())
+    val tragosFavoritos: StateFlow<Set<Int>> = _tragosFavoritos.asStateFlow()
+
     init {
         Log.d(TAG, "Initializing TragosViewModel")
         cargarTragos()
+        cargarFavoritos()
     }
 
     fun cargarTragos() {
@@ -78,5 +95,51 @@ class TragosViewModel(
 
     fun limpiarTragoDetalle() {
         _tragoDetalleState.value = null
+    }
+
+    fun cargarFavoritos() {
+        val userId = usuarioglobal?.id_usuario
+        if (userId == null) {
+            Log.e(TAG, "No se pudo obtener el ID del usuario")
+            return
+        }
+
+        ClientApi.obtenerFavoritos(userId) { favoritos, error ->
+            if (favoritos != null) {
+                val favoritosIds = favoritos.map { it.id }.toSet()
+                _tragosFavoritos.value = favoritosIds
+                Log.d(TAG, "Favoritos cargados: ${favoritosIds.size} tragos")
+            } else {
+                Log.e(TAG, "Error al cargar favoritos: $error")
+            }
+        }
+    }
+
+    fun agregarFavorito(tragoId: Int) {
+        val userId = usuarioglobal?.id_usuario
+        if (userId == null) {
+            _favoritoState.value = FavoritoUiState.Error("No se pudo obtener el ID del usuario")
+            return
+        }
+
+        _favoritoState.value = FavoritoUiState.Loading
+
+        ClientApi.agregarFavorito(userId, tragoId) { success, message ->
+            if (success) {
+                _favoritoState.value = FavoritoUiState.Success(message ?: "Guardado correctamente")
+                // Agregar el trago a la lista de favoritos
+                _tragosFavoritos.value = _tragosFavoritos.value + tragoId
+            } else {
+                _favoritoState.value = FavoritoUiState.Error(message ?: "Error al agregar favorito")
+            }
+        }
+    }
+
+    fun limpiarFavoritoState() {
+        _favoritoState.value = FavoritoUiState.Idle
+    }
+
+    fun esFavorito(tragoId: Int): Boolean {
+        return _tragosFavoritos.value.contains(tragoId)
     }
 } 
