@@ -39,6 +39,7 @@ import androidx.core.content.ContextCompat.startActivity
 @Composable
 fun HomeScreen(
     userName: String,
+    esModoOffline: Boolean,
     onChatClick: () -> Unit,
     onFavoritesClick: () -> Unit,
     onPartyClick: () -> Unit,
@@ -79,13 +80,15 @@ fun HomeScreen(
         )
 
 
-        HomeCard(
-            title = "Chatea con Ferni",
-            description = "Combina tus ingredientes y recibe recomendaciones personalizadas",
-            icon = painterResource(id = R.drawable.ic_ferni),
-            onClick = onChatClick,
-            backgroundColor = Color(0xFFEDF6FF) // celeste claro
-        )
+        if (!esModoOffline) {
+            HomeCard(
+                title = "Chatea con Ferni",
+                description = "Combina tus ingredientes y recibe recomendaciones personalizadas",
+                icon = painterResource(id = R.drawable.ic_ferni),
+                onClick = onChatClick,
+                backgroundColor = Color(0xFFEDF6FF)
+            )
+        }
 
         HomeCard(
             title = "Recetas",
@@ -103,13 +106,15 @@ fun HomeScreen(
             backgroundColor = Color(0xFFFFF8E1) // amarillo claro
         )
 
-        HomeCard(
-            title = "Mis favoritos",
-            description = "Accede rápidamente a tus recetas guardadas",
-            icon = painterResource(id = R.drawable.ic_favoritos),
-            onClick = onFavoritesClick,
-            backgroundColor = Color(0xFFFFEBEE) // rosa claro
-        )
+        if (!esModoOffline) {
+            HomeCard(
+                title = "Mis favoritos",
+                description = "Accede rápidamente a tus recetas guardadas",
+                icon = painterResource(id = R.drawable.ic_favoritos),
+                onClick = onFavoritesClick,
+                backgroundColor = Color(0xFFFFEBEE) // rosa claro
+            )
+        }
 
         HomeCard(
             title = "Mis creaciones",

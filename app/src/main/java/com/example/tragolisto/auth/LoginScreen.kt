@@ -286,6 +286,37 @@ fun LoginScreenContent(
                 }
             }
         }
+
+        // ✅ Botón de acceso offline
+        Spacer(modifier = Modifier.height(16.dp)) // Separación del botón anterior
+        Button(
+            onClick = {
+                // Login offline simulado
+                usuarioglobal = UserGlobal(
+                    uid = "offline_user",
+                    email = "offline@user.com",
+                    nombre = "Invitado",
+                    idToken = "offline"
+                )
+                val intent = Intent(context, MainActivity::class.java)
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                context.startActivity(intent)
+            },
+            shape = RoundedCornerShape(12.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color.Gray,
+                contentColor = Color.White
+            ),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp)
+        ) {
+            Text(
+                text = "Ingresar sin conexión",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium
+            )
+        }
     }
 }
 

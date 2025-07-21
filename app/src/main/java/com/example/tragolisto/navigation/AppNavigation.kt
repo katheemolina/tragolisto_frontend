@@ -56,9 +56,8 @@ fun AppNavigation(requiresOnboarding: Boolean) { // <-- ¡Añadimos este paráme
 
         composable(Screen.Home.route) {
             HomeScreen(
-                // Aquí, 'usuarioglobal?.nombre' debería estar ya establecido desde MainActivity
-                // después de la autenticación de Firebase y la llamada inicial al backend.
-                userName = (usuarioglobal?.nombre ?: "Usuario"), // Usar "Usuario" si el nombre es nulo
+                userName = (usuarioglobal?.nombre ?: "Usuario"),
+                esModoOffline = usuarioglobal?.idToken == "offline", // 👈 nuevo parámetro
                 onChatClick = { navController.navigate(Screen.Chat.route) },
                 onFavoritesClick = { navController.navigate(Screen.Favorites.route) },
                 onPartyClick = { navController.navigate(Screen.Party.route) },
@@ -66,6 +65,7 @@ fun AppNavigation(requiresOnboarding: Boolean) { // <-- ¡Añadimos este paráme
                 onCreationsClick = { navController.navigate(Screen.Creations.route) }
             )
         }
+
 
         composable(Screen.Chat.route) {
             ChatSelectorScreen()
