@@ -10,7 +10,6 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -25,11 +24,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.tragolisto.data.local.AppDatabase
-import com.example.tragolisto.data.local.TragoDao
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatScreen(
+    chatTitle: String,
     onBackClick: () -> Unit,
     viewModel: ChatViewModel = viewModel(
         factory = ChatViewModelFactory(
@@ -42,7 +41,10 @@ fun ChatScreen(
     var inputText by remember { mutableStateOf("") }
     val snackbarHostState = remember { SnackbarHostState() }
 
-    // Mostrar Snackbar cuando hay un mensaje
+    LaunchedEffect(chatTitle) {
+        viewModel.cargarMensajesDeChat(chatTitle)
+    }
+
     LaunchedEffect(snackbarMessage) {
         snackbarMessage?.let { message ->
             snackbarHostState.showSnackbar(message)
@@ -53,7 +55,7 @@ fun ChatScreen(
     Scaffold(
         modifier = Modifier
             .fillMaxSize()
-            .imePadding(), // 👈 Importante para evitar que el teclado empuje elementos
+            .imePadding(),
         topBar = {
             TopAppBar(
                 title = {
@@ -62,13 +64,8 @@ fun ChatScreen(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(
-                            text = "Ferni",
+                            text = chatTitle,
                             style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                            textAlign = TextAlign.Center
-                        )
-                        Text(
-                            text = "Bartender Virtual",
-                            style = MaterialTheme.typography.bodySmall.copy(color = Color.Gray),
                             textAlign = TextAlign.Center
                         )
                     }
@@ -80,14 +77,6 @@ fun ChatScreen(
                             contentDescription = "Volver"
                         )
                     }
-                },
-                actions = {
-                    IconButton(onClick = {  }) {
-                        Icon(
-                            imageVector = Icons.Default.Info,
-                            contentDescription = "Historial de chats"
-                        )
-                    }
                 }
             )
         },
@@ -95,13 +84,12 @@ fun ChatScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .navigationBarsPadding() // 👈 Agrega espacio si hay gesture navigation
+                    .navigationBarsPadding()
                     .padding(8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 TextField(
-                    modifier = Modifier
-                        .weight(1f),
+                    modifier = Modifier.weight(1f),
                     value = inputText,
                     onValueChange = { inputText = it },
                     placeholder = { Text("Escribe un mensaje...") },
@@ -150,7 +138,6 @@ fun ChatScreen(
     }
 }
 
-
 @Composable
 fun MessageItem(
     message: Message,
@@ -172,7 +159,7 @@ fun MessageItem(
                     bottomEnd = if (isUser) 0.dp else 16.dp,
                     bottomStart = if (isUser) 16.dp else 0.dp
                 ),
-                color = if (isUser) Color(0xFFDCF8C6) else Color(0xFFEDEDED), // Verde claro y gris
+                color = if (isUser) Color(0xFFDCF8C6) else Color(0xFFEDEDED),
                 tonalElevation = 1.dp,
                 shadowElevation = 2.dp,
                 modifier = Modifier
@@ -185,7 +172,6 @@ fun MessageItem(
                         .widthIn(max = 280.dp)
                 ) {
                     if (message.isRecipe && message.recipeData != null) {
-                        // Display formatted recipe
                         val recipe = message.recipeData.data
                         Text(
                             text = recipe.nombre,
@@ -215,7 +201,6 @@ fun MessageItem(
                             )
                         }
                     } else {
-                        // Display plain text for user or non-recipe bot messages
                         Text(
                             text = message.text,
                             color = Color.Black,
@@ -225,7 +210,6 @@ fun MessageItem(
                 }
             }
 
-            // Botón de guardar con mejor estética
             if (!isUser && message.isRecipe && message.recipeData != null) {
                 OutlinedButton(
                     onClick = { onSaveRecipe(message.recipeData) },

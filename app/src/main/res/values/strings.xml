@@ -3,4 +3,5 @@
     <string name="default_web_client_id">819046930445-b5k6uh0e9m60lj1srqku1h51fvpitst0.apps.googleusercontent.com</string>
     <string name="title_activity_google_login">GoogleLogin</string>
     <string name="title_activity_login_screen">LoginScreen</string>
+    <string name="title_activity_chat_selector_screen">ChatSelectorScreen</string>
 </resources>

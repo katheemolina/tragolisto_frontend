@@ -5,6 +5,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.tragolisto.chat.ChatScreen
+import com.example.tragolisto.chat.ChatSelectorScreen
 import com.example.tragolisto.creations.CreationsScreen
 import com.example.tragolisto.data.global.usuarioglobal
 import com.example.tragolisto.favorites.FavoritesScreen
@@ -67,9 +68,7 @@ fun AppNavigation(requiresOnboarding: Boolean) { // <-- ¡Añadimos este paráme
         }
 
         composable(Screen.Chat.route) {
-            ChatScreen(
-                onBackClick = { navController.popBackStack() }
-            )
+            ChatSelectorScreen()
         }
 
         composable(Screen.Favorites.route) {
