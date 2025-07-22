@@ -28,13 +28,26 @@ import com.example.tragolisto.ui.viewmodel.JuegosFiestaViewModel
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.background
+import androidx.compose.ui.platform.LocalContext
+import kotlinx.coroutines.launch
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import com.example.tragolisto.data.local.AppDatabase
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PartyScreen(
-    onBackClick: () -> Unit,
-    viewModel: JuegosFiestaViewModel = viewModel()
+    onBackClick: () -> Unit
 ) {
+    val context = LocalContext.current
+    val db = remember { AppDatabase.DatabaseProvider.getDatabase(context) }
+    val viewModel: JuegosFiestaViewModel = viewModel(
+        factory = object : ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                return JuegosFiestaViewModel(juegoFiestaDao = db.juegoFiestaDao) as T
+            }
+        }
+    )
     val uiState by viewModel.uiState.collectAsState()
     val juegoDetalleState by viewModel.juegoDetalleState.collectAsState()
 

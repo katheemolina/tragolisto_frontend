@@ -5,9 +5,10 @@ import androidx.room.RoomDatabase
 import android.content.Context
 import androidx.room.Room
 
-@Database(entities = [TragoLocal::class], version = 1)
+@Database(entities = [TragoLocal::class, JuegoFiestaLocal::class], version = 2)
 abstract class AppDatabase : RoomDatabase() {
     abstract val dao: TragoDao
+    abstract val juegoFiestaDao: JuegoFiestaDao
 
     object DatabaseProvider {
         @Volatile
@@ -19,7 +20,7 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "tragos_db"
-                ).build()
+                ).fallbackToDestructiveMigration().build()
                 INSTANCE = instance
                 instance
             }

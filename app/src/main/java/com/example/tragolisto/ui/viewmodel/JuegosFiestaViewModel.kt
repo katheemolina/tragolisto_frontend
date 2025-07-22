@@ -11,6 +11,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
+import com.example.tragolisto.data.local.JuegoFiestaDao
+import com.example.tragolisto.data.local.JuegoFiestaLocal
+import com.example.tragolisto.data.global.usuarioglobal
 
 sealed class JuegosFiestaUiState {
     object Loading : JuegosFiestaUiState()
@@ -25,7 +28,8 @@ sealed class JuegoDetalleUiState {
 }
 
 class JuegosFiestaViewModel(
-    private val repository: JuegosFiestaRepository = JuegosFiestaRepository()
+    private val repository: JuegosFiestaRepository = JuegosFiestaRepository(),
+    private val juegoFiestaDao: JuegoFiestaDao? = null // Nuevo parámetro opcional
 ) : ViewModel() {
     private val TAG = "JuegosFiestaViewModel"
     private val _uiState = MutableStateFlow<JuegosFiestaUiState>(JuegosFiestaUiState.Loading)
@@ -43,18 +47,31 @@ class JuegosFiestaViewModel(
         viewModelScope.launch {
             _uiState.value = JuegosFiestaUiState.Loading
             try {
-                Log.d(TAG, "Intentando cargar juegos...")
-                val juegos = repository.getJuegos()
-                Log.d(TAG, "Juegos cargados exitosamente: ${juegos.size} juegos")
-                _uiState.value = JuegosFiestaUiState.Success(juegos)
-            } catch (e: UnknownHostException) {
-                Log.e(TAG, "No se pudo conectar al servidor. Verifica tu conexión a internet.", e)
-                _uiState.value = JuegosFiestaUiState.Error("No se pudo conectar al servidor. Verifica tu conexión a internet.")
-            } catch (e: SocketTimeoutException) {
-                Log.e(TAG, "La conexión al servidor tardó demasiado. Intenta de nuevo.", e)
-                _uiState.value = JuegosFiestaUiState.Error("La conexión al servidor tardó demasiado. Intenta de nuevo.")
+                val esModoOffline = usuarioglobal?.idToken == "offline"
+                val juegos = if (esModoOffline && juegoFiestaDao != null) {
+                    // Cargar desde Room
+                    val lista = juegoFiestaDao.obtenerTodos()
+                    if (lista.isEmpty()) {
+                        // Poblar si está vacío
+                        juegoFiestaDao.insertarTodos(juegosFiestaOffline)
+                        juegoFiestaDao.obtenerTodos()
+                    } else {
+                        lista
+                    }
+                } else {
+                    // Cargar desde la API
+                    repository.getJuegos()
+                }
+                // Convertir a modelo de UI si es necesario
+                val juegosFiesta = juegos.map {
+                    when (it) {
+                        is JuegoFiesta -> it
+                        is JuegoFiestaLocal -> it.toJuegoFiesta()
+                        else -> throw Exception("Tipo de juego desconocido")
+                    }
+                }
+                _uiState.value = JuegosFiestaUiState.Success(juegosFiesta)
             } catch (e: Exception) {
-                Log.e(TAG, "Error al cargar juegos", e)
                 _uiState.value = JuegosFiestaUiState.Error("Error al cargar los juegos: ${e.message}")
             }
         }
@@ -79,4 +96,26 @@ class JuegosFiestaViewModel(
     fun limpiarJuegoDetalle() {
         _juegoDetalleState.value = null
     }
-} 
+}
+
+// Extension para convertir JuegoFiestaLocal a JuegoFiesta
+fun JuegoFiestaLocal.toJuegoFiesta(): JuegoFiesta = JuegoFiesta(
+    id = id,
+    nombre = nombre,
+    descripcion = descripcion,
+    categoria = categoria,
+    materiales = materiales,
+    minJugadores = min_jugadores,
+    maxJugadores = max_jugadores,
+    esParaBeber = es_para_beber,
+    createdAt = "1970-01-01T00:00:00Z", // Valor por defecto
+    updatedAt = "1970-01-01T00:00:00Z"  // Valor por defecto
+)
+
+// Lista de juegos offline (puedes moverla a un archivo común si ya existe)
+val juegosFiestaOffline = listOf(
+    JuegoFiestaLocal(1, "Yo Nunca Nunca", "Un clásico juego de fiesta donde los participantes dicen algo que nunca han hecho, y si alguien sí lo ha hecho, debe tomar.", "De preguntas", "Ninguno", 3, null, true),
+    JuegoFiestaLocal(2, "Adivina la Canción", "Reproduce el inicio de una canción y los demás deben adivinar el título o el artista. El primero en acertar gana un punto.", "Musical", "Dispositivo de audio, lista de canciones", 2, null, false),
+    JuegoFiestaLocal(25, "Círculo de la Muerte (Kings Cup)", "Un juego de cartas donde cada carta tiene una regla asociada que los jugadores deben seguir, a menudo involucrando beber.", "Con elementos", "Baraja de cartas, vasos, bebida", 3, null, true)
+    // ... agrega el resto de los juegos aquí ...
+) 
