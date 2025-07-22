@@ -61,6 +61,7 @@ fun DotIndicator(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OnboardingScreen(
+    esModoInvitado: Boolean,
     onFinish: () -> Unit
 ) {
     var currentPage by remember { mutableStateOf(0) }
@@ -193,7 +194,13 @@ fun OnboardingScreen(
                     } else {
                         // Last intro page, button to move to the date of birth collection page
                         Button(
-                            onClick = { currentPage++ }, // Advance to the data collection page
+                            onClick = {
+                                if (esModoInvitado) {
+                                    onFinish()
+                                } else {
+                                    currentPage++ // Avanza a la pantalla de la fecha
+                                }
+                            },
                             modifier = Modifier
                                 .height(48.dp)
                                 .clip(RoundedCornerShape(24.dp)),
@@ -261,11 +268,11 @@ fun OnboardingScreen(
                 Spacer(modifier = Modifier.height(24.dp))
                 Button(
                     onClick = {
-                        if (birthDate != null && !isSavingBirthDate) {
+                        if (esModoInvitado) {
+                            onFinish()
+                        } else if (birthDate != null && !isSavingBirthDate) {
                             isSavingBirthDate = true
                             errorMessage = null // Clear previous error messages
-
-                                                        // Get the current user's ID Token from Firebase
                             auth.currentUser?.getIdToken(true)?.addOnCompleteListener { task ->
                                 if (task.isSuccessful) {
                                     val idToken = usuarioglobal?.idToken
@@ -297,10 +304,10 @@ fun OnboardingScreen(
                             }
                         }
                     },
-                    enabled = birthDate != null && !isSavingBirthDate, // Enabled if date selected and not saving
+                    enabled = esModoInvitado || (birthDate != null && !isSavingBirthDate), // Enabled if date selected and not saving
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    if (isSavingBirthDate) {
+                    if (isSavingBirthDate && !esModoInvitado) {
                         CircularProgressIndicator(modifier = Modifier.size(24.dp))
                     } else {
                         Text("¡Listo, comencemos!")

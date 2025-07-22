@@ -35,6 +35,24 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // --- NUEVO: Si es modo invitado/offline, navega directo a Onboarding ---
+        if (usuarioglobal?.idToken == "offline") {
+            setContent {
+                TragoListoTheme {
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
+                        color = MaterialTheme.colorScheme.background
+                    ) {
+                        // SIEMPRE mostrar onboarding para invitados
+                        AppNavigation(requiresOnboarding = true)
+                    }
+                }
+            }
+            return
+        }
+        // --- FIN NUEVO ---
+
         auth = Firebase.auth
 
         setContent {

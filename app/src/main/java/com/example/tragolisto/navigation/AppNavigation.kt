@@ -42,6 +42,7 @@ fun AppNavigation(requiresOnboarding: Boolean) { // <-- ¡Añadimos este paráme
     ) {
         composable(Screen.Onboarding.route) {
             OnboardingScreen(
+                esModoInvitado = usuarioglobal?.idToken == "offline",
                 onFinish = {
                     // Después de que el onboarding en la UI se "complete",
                     // navegamos a Home. Asumimos que si hay datos adicionales
