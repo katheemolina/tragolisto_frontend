@@ -3,6 +3,7 @@ package com.example.tragolisto.data.api
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import com.example.tragolisto.data.global.usuarioglobal
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
 import com.example.tragolisto.data.model.FavoritoResponse
@@ -20,6 +21,7 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.TimeUnit
 import com.example.tragolisto.data.model.Trago
+import java.time.Period
 
 object ClientApi {
 
@@ -133,6 +135,14 @@ object ClientApi {
         }
 
         val requestBody = jsonBody.toString().toRequestBody(MEDIA_TYPE_JSON)
+
+        val currentDate = LocalDate.now()
+        val age = Period.between(birthDate, currentDate).years
+        if (age < 18) {
+            usuarioglobal?.esMayor?: false
+        } else {
+            usuarioglobal?.esMayor?: true
+        }
 
         val request = Request.Builder()
             .url(backendUrl)

@@ -171,6 +171,7 @@ fun MessageItem(
                         .padding(horizontal = 12.dp, vertical = 8.dp)
                         .widthIn(max = 280.dp)
                 ) {
+
                     if (message.isRecipe && message.recipeData != null) {
                         val recipe = message.recipeData.data
                         Text(

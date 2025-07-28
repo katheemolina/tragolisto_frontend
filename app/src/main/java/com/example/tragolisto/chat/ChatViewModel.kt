@@ -13,11 +13,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-// Representación de un mensaje en el chat
 data class Message(
     val id: Int,
     val text: String,
-    val role: String, // "user" o "assistant"
+    val role: String,
     val isRecipe: Boolean = false,
     val recipeData: RecetaChat? = null
 )
@@ -41,7 +40,8 @@ class ChatViewModel(private val tragoDao: TragoDao) : ViewModel() {
             try {
                 val chatsResponse = FerniApiService.api.obtenerChats(userId)
                 if (chatsResponse.isSuccessful) {
-                    val chatMetadata = chatsResponse.body()?.find { it.created_at.contains(chatTitle, ignoreCase = true) }
+                    val chatMetadata = chatsResponse.body()
+                        ?.find { it.title.equals(chatTitle, ignoreCase = true) }
                     chatMetadata?.let { meta ->
                         chatId = meta.id
                         val mensajesResponse = FerniApiService.api.obtenerMensajes(meta.id)
@@ -90,26 +90,24 @@ class ChatViewModel(private val tragoDao: TragoDao) : ViewModel() {
 
         viewModelScope.launch {
             try {
-                // Si el chat no existe aún, crearlo
-                if (chatId == null) {
-                    val newChatResponse = FerniApiService.api.crearNuevoChat(NewChatRequest(user_id = userId, message = texto))
-                    if (newChatResponse.isSuccessful) {
-                        chatId = newChatResponse.body()?.chat_id
-                        val reply = newChatResponse.body()?.reply ?: "Sin respuesta."
-                        agregarRespuestaFerni(reply)
-                    } else {
-                        agregarMensajeDeError("No se pudo crear el chat")
-                    }
+                val historial = _messages.value.map {
+                    FerniMessage(role = it.role, text = it.text)
+                }
+
+                val request = ChatRequest(
+                    user_id = userId,
+                    chat_id = chatId,
+                    messages = listOf(FerniMessage(role = "user", text = texto))
+                )
+
+                val response = FerniApiService.api.manejarChat(request)
+
+                if (response.isSuccessful) {
+                    chatId = response.body()?.chat_id // si es nuevo, se guarda el id
+                    val reply = response.body()?.reply ?: "Sin respuesta."
+                    agregarRespuestaFerni(reply)
                 } else {
-                    val sendResponse = FerniApiService.api.enviarMensajeAChat(
-                        SendMessageRequest(chat_id = chatId!!, message = texto)
-                    )
-                    if (sendResponse.isSuccessful) {
-                        val reply = sendResponse.body()?.reply ?: "Sin respuesta."
-                        agregarRespuestaFerni(reply)
-                    } else {
-                        agregarMensajeDeError("Error: ${sendResponse.code()} - ${sendResponse.message()}")
-                    }
+                    agregarMensajeDeError("Error: ${response.code()} - ${response.message()}")
                 }
             } catch (e: Exception) {
                 agregarMensajeDeError("Error: ${e.localizedMessage ?: "Error desconocido"}")
@@ -118,23 +116,44 @@ class ChatViewModel(private val tragoDao: TragoDao) : ViewModel() {
     }
 
     private fun agregarRespuestaFerni(reply: String) {
-        var finalReply = reply
-        if (reply.trim().startsWith("{") && reply.trim().contains("respuesta_ferni")) {
-            try {
-                val backendResponse = gson.fromJson(reply, Map::class.java)
-                finalReply = backendResponse["respuesta_ferni"]?.toString() ?: reply
-            } catch (_: Exception) {}
+        val trimmedReply = reply.trim()
+
+        // Extraer si viene con "respuesta_ferni"
+        val extractedReply = try {
+            if (trimmedReply.startsWith("{") && trimmedReply.contains("respuesta_ferni")) {
+                val backendResponse = gson.fromJson(trimmedReply, Map::class.java)
+                backendResponse["respuesta_ferni"]?.toString() ?: trimmedReply
+            } else {
+                trimmedReply
+            }
+        } catch (_: Exception) {
+            trimmedReply
         }
 
-        val (isRecipe, recipeData) = parseRecipeResponse(finalReply)
+        // Intentar parsear receta
+        val (isRecipe, recipeData) = parseRecipeResponse(extractedReply)
+
+        val textoParaMostrar = if (isRecipe && recipeData != null) {
+            // Mostramos solo los campos útiles
+            buildString {
+                appendLine(recipeData.data.nombre)
+                appendLine(recipeData.data.descripcion)
+                appendLine()
+                appendLine("Ingredientes:")
+                recipeData.data.ingredientes.forEach { appendLine("• $it") }
+            }.trim()
+        } else {
+            extractedReply
+        }
 
         val nuevoMensajeFerni = Message(
             id = messageId++,
-            text = finalReply,
+            text = textoParaMostrar,
             role = "assistant",
             isRecipe = isRecipe,
             recipeData = recipeData
         )
+
         _messages.value = _messages.value + nuevoMensajeFerni
     }
 

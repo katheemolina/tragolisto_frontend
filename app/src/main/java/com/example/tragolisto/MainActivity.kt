@@ -96,12 +96,14 @@ class MainActivity : ComponentActivity() {
                                         uid = firebaseUser.uid,
                                         email = firebaseUser.email,
                                         nombre = firebaseUser.displayName,
-                                        idToken = currentIdToken
+                                        idToken = currentIdToken,
+                                        esMayor = false,
                                     ) ?: UserGlobal(
                                         uid = firebaseUser.uid,
                                         email = firebaseUser.email,
                                         nombre = firebaseUser.displayName,
-                                        idToken = currentIdToken
+                                        idToken = currentIdToken,
+                                        esMayor = false
                                     )
                                     Log.d("MainActivity", "usuarioglobal actualizado con nuevo token de Firebase.")
                                 }

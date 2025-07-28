@@ -16,28 +16,15 @@ data class FerniMessage(
     val text: String
 )
 
-data class FerniRequest(
-    val history: List<FerniMessage>
+data class ChatRequest(
+    val user_id: Int? = null,
+    val chat_id: Int? = null,
+    val messages: List<FerniMessage>
 )
 
-data class FerniResponse(
-    val reply: String
-)
-
-// Nuevas estructuras para nuevos endpoints
-data class NewChatRequest(
-    val user_id: Int?,
-    val message: String
-)
-
-data class NewChatResponse(
+data class ChatResponse(
     val chat_id: Int?,
     val reply: String
-)
-
-data class SendMessageRequest(
-    val chat_id: Int?,
-    val message: String
 )
 
 data class ChatMetadata(
@@ -59,15 +46,8 @@ data class ChatMessage(
 
 interface FerniApi {
 
-    // Antiguo endpoint (opcional)
-    @POST("/ferni")
-    suspend fun enviarMensaje(@Body request: FerniRequest): Response<FerniResponse>
-
-    @POST("/ferni/new-chat")
-    suspend fun crearNuevoChat(@Body request: NewChatRequest): Response<NewChatResponse>
-
     @POST("/ferni/send-message")
-    suspend fun enviarMensajeAChat(@Body request: SendMessageRequest): Response<FerniResponse>
+    suspend fun manejarChat(@Body request: ChatRequest): Response<ChatResponse>
 
     @GET("/ferni/chats/{userId}")
     suspend fun obtenerChats(@Path("userId") userId: Int?): Response<List<ChatMetadata>>

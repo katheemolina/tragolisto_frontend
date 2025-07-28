@@ -143,7 +143,8 @@ class LoginScreen : ComponentActivity() {
                         uid = uid,
                         email = email,
                         nombre = nombre,
-                        idToken = idToken
+                        idToken = idToken,
+                        esMayor = false
                     )
                     // Enviar los datos iniciales de Google al backend
                     ClientApi.sendGoogleLoginData(idToken, uid, email, nombre ?: "") { success, responseData ->
@@ -296,7 +297,8 @@ fun LoginScreenContent(
                     uid = "offline_user",
                     email = "offline@user.com",
                     nombre = "Invitado",
-                    idToken = "offline"
+                    idToken = "offline",
+                    esMayor = false
                 )
                 val intent = Intent(context, MainActivity::class.java)
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
