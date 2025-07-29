@@ -16,7 +16,10 @@ interface TragoDao {
     fun obtenerTodos(): Flow<List<TragoLocal>>
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun insertar(trago: TragoLocal)
+    suspend fun insertar(tragos: TragoLocal)
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertarTodos(tragos: List<TragoLocal>)
 
     @Delete
     suspend fun eliminar(trago: TragoLocal)
