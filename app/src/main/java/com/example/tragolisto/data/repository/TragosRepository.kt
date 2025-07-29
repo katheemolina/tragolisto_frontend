@@ -6,8 +6,8 @@ import com.example.tragolisto.data.model.TragosResponse
 import retrofit2.Response
 
 class TragosRepository {
-    suspend fun getTragos(): TragosResponse {
-        val response = ApiService.tragosApi.getTragos()
+    suspend fun getTragos(userId: Int): TragosResponse {
+        val response = ApiService.tragosApi.getTragos(userId)
         if (!response.isSuccessful) {
             throw Exception("Error al cargar los tragos: ${response.code()}")
         }
@@ -21,4 +21,4 @@ class TragosRepository {
         }
         return response.body() ?: throw Exception("No se encontró el trago")
     }
-} 
+}

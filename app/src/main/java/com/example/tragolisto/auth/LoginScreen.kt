@@ -62,11 +62,9 @@ class LoginScreen : ComponentActivity() {
         auth = Firebase.auth
         credentialManager = CredentialManager.create(this)
 
-        // Establecer el contenido inicial de Compose para la pantalla de Login
         setContent {
             TragoListoTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
-                    // Estos estados son para la UI del LoginScreen.
                     var isLoading by remember { mutableStateOf(false) }
                     var errorMessage by remember { mutableStateOf<String?>(null) }
 

@@ -3,6 +3,7 @@ package com.example.tragolisto.ui.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.tragolisto.data.api.ApiService
 import com.example.tragolisto.data.api.ClientApi
 import com.example.tragolisto.data.global.usuarioglobal
 import com.example.tragolisto.data.model.Trago
@@ -64,16 +65,16 @@ class TragosViewModel(
 
     fun cargarTragos() {
         viewModelScope.launch {
-            _uiState.value = TragosUiState.Loading
             try {
-                val tragosResponse = repository.getTragos()
-                _uiState.value = TragosUiState.Success(tragosResponse.tragos)
-            } catch (e: UnknownHostException) {
-                _uiState.value = TragosUiState.Error("No se pudo conectar al servidor. Verifica tu conexión a internet.")
-            } catch (e: SocketTimeoutException) {
-                _uiState.value = TragosUiState.Error("La conexión al servidor tardó demasiado. Intenta de nuevo.")
+                val userId = usuarioglobal?.id_usuario ?: return@launch
+                val response = ApiService.tragosApi.getTragos(userId)
+                if (response.isSuccessful && response.body() != null) {
+                    _uiState.value = TragosUiState.Success(response.body()!!.tragos)
+                } else {
+                    _uiState.value = TragosUiState.Error("Error al obtener los tragos")
+                }
             } catch (e: Exception) {
-                _uiState.value = TragosUiState.Error("Error al cargar los tragos: ${e.message}")
+                _uiState.value = TragosUiState.Error("Excepción: ${e.localizedMessage}")
             }
         }
     }
