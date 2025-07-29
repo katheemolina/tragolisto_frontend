@@ -14,11 +14,14 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 import retrofit2.http.Path
+import retrofit2.http.Query
 import java.util.concurrent.TimeUnit
 
 interface TragosApi {
     @GET("api/tragos")
-    suspend fun getTragos(): Response<TragosResponse>
+    suspend fun getTragos(
+        @Query("user_id") userId: Int
+    ): Response<TragosResponse>
 
     @GET("api/tragos/{id}")
     suspend fun getTragoPorId(@Path("id") id: Int): Response<Trago>

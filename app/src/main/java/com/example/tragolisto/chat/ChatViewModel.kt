@@ -1,5 +1,6 @@
 package com.example.tragolisto.chat
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.tragolisto.data.api.*
@@ -116,46 +117,38 @@ class ChatViewModel(private val tragoDao: TragoDao) : ViewModel() {
     }
 
     private fun agregarRespuestaFerni(reply: String) {
-        val trimmedReply = reply.trim()
+        var finalReply = reply
 
-        // Extraer si viene con "respuesta_ferni"
-        val extractedReply = try {
-            if (trimmedReply.startsWith("{") && trimmedReply.contains("respuesta_ferni")) {
-                val backendResponse = gson.fromJson(trimmedReply, Map::class.java)
-                backendResponse["respuesta_ferni"]?.toString() ?: trimmedReply
-            } else {
-                trimmedReply
+        if (reply.trim().startsWith("{") || reply.contains("```")) {
+            try {
+                Log.d("DEBUG", "Respuesta recibida: $reply")
+                val (isRecipe, recipeData) = parseRecipeResponse(reply)
+                Log.d("DEBUG", "¿Es receta? $isRecipe - ¿Data? ${recipeData != null}")
+
+                val nuevoMensajeFerni = Message(
+                    id = messageId++,
+                    text = reply,
+                    role = "assistant",
+                    isRecipe = isRecipe,
+                    recipeData = recipeData
+                )
+
+                _messages.value = _messages.value + nuevoMensajeFerni
+                return
+            } catch (e: Exception) {
+                Log.e("ParseFerni", "Fallo al parsear receta: ${e.message}")
             }
-        } catch (_: Exception) {
-            trimmedReply
         }
 
-        // Intentar parsear receta
-        val (isRecipe, recipeData) = parseRecipeResponse(extractedReply)
-
-        val textoParaMostrar = if (isRecipe && recipeData != null) {
-            // Mostramos solo los campos útiles
-            buildString {
-                appendLine(recipeData.data.nombre)
-                appendLine(recipeData.data.descripcion)
-                appendLine()
-                appendLine("Ingredientes:")
-                recipeData.data.ingredientes.forEach { appendLine("• $it") }
-            }.trim()
-        } else {
-            extractedReply
-        }
-
-        val nuevoMensajeFerni = Message(
+        // fallback si no se detectó receta
+        val fallbackMessage = Message(
             id = messageId++,
-            text = textoParaMostrar,
-            role = "assistant",
-            isRecipe = isRecipe,
-            recipeData = recipeData
+            text = reply,
+            role = "assistant"
         )
-
-        _messages.value = _messages.value + nuevoMensajeFerni
+        _messages.value = _messages.value + fallbackMessage
     }
+
 
     private fun agregarMensajeDeError(error: String) {
         val errorMsg = Message(id = messageId++, text = error, role = "assistant")
