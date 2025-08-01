@@ -35,6 +35,7 @@ import kotlinx.coroutines.launch
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.example.tragolisto.data.local.AppDatabase
+import com.example.tragolisto.data.global.usuarioglobal
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -117,10 +118,14 @@ fun PartyScreen(
                     var juegos = (uiState as JuegosFiestaUiState.Success).juegos
 
                     juegos = juegos.filter {
-                        (categoriaSeleccionada == "Todas" || it.categoria.equals(categoriaSeleccionada, ignoreCase = true)) &&
+                        val puedeVerEsteJuego = if (it.esParaBeber) (usuarioglobal?.esMayor != false) else true
+
+                        puedeVerEsteJuego &&
+                                (categoriaSeleccionada == "Todas" || it.categoria.equals(categoriaSeleccionada, ignoreCase = true)) &&
                                 (!soloParaBeber || it.esParaBeber) &&
                                 (busqueda.text.isBlank() || it.nombre.contains(busqueda.text, ignoreCase = true))
                     }
+
 
                     Column(modifier = Modifier.fillMaxSize()) {
                         Column(modifier = Modifier.padding(16.dp)) {
@@ -170,15 +175,17 @@ fun PartyScreen(
                             Spacer(modifier = Modifier.height(12.dp))
 
                             // FILTRO "PARA BEBER"
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.Center
-                            ) {
-                                FilterToggleButton(
-                                    text = "🍻 Para beber",
-                                    selected = soloParaBeber,
-                                    onClick = { soloParaBeber = !soloParaBeber }
-                                )
+                            if (usuarioglobal?.esMayor != false) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.Center
+                                ) {
+                                    FilterToggleButton(
+                                        text = "🍻 Para beber",
+                                        selected = soloParaBeber,
+                                        onClick = { soloParaBeber = !soloParaBeber }
+                                    )
+                                }
                             }
                         }
 

@@ -24,6 +24,7 @@ import com.example.tragolisto.data.global.usuarioglobal
 import com.example.tragolisto.data.api.ClientApi
 import android.util.Log
 import com.google.firebase.auth.FirebaseAuth // Import FirebaseAuth
+import java.time.Period
 
 data class OnboardingPage(
     val title: String,
@@ -272,12 +273,16 @@ fun OnboardingScreen(
                             onFinish()
                         } else if (birthDate != null && !isSavingBirthDate) {
                             isSavingBirthDate = true
-                            errorMessage = null // Clear previous error messages
+                            errorMessage = null
+
+                            // Calcular edad y guardar si es mayor
+                            val edad = Period.between(birthDate, LocalDate.now()).years
+                            usuarioglobal?.esMayor = edad >= 18
+
                             auth.currentUser?.getIdToken(true)?.addOnCompleteListener { task ->
                                 if (task.isSuccessful) {
                                     val idToken = usuarioglobal?.idToken
                                     if (idToken != null) {
-                                        // Call the new `completarOnboarding` function in ClientApi
                                         Log.d("OnboardingScreen", "ID Token a enviar: ${idToken.take(20)}... (truncado)")
                                         Log.d("OnboardingScreen", "Fecha de nacimiento a enviar: ${birthDate!!.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))}")
 
@@ -285,10 +290,10 @@ fun OnboardingScreen(
                                             isSavingBirthDate = false
                                             if (success) {
                                                 Log.d("OnboardingScreen", "Onboarding completed successfully: $message")
-                                                onFinish() // Call onFinish to navigate to Home
+                                                onFinish()
                                             } else {
                                                 Log.e("OnboardingScreen", "Error completing onboarding: $message")
-                                                errorMessage = "Error: $message" // Display error in UI
+                                                errorMessage = "Error: $message"
                                             }
                                         }
                                     } else {

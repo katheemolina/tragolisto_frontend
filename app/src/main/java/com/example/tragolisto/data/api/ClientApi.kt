@@ -39,7 +39,8 @@ object ClientApi {
         val existe: Boolean,
         val id_usuario: Int,
         val fecha_nacimiento: String?,
-        val requiere_onboarding: Boolean
+        val requiere_onboarding: Boolean,
+        val es_mayor: Boolean
     )
 
     fun sendGoogleLoginData(idToken: String, uid: String?, email: String?, name: String, callback: (Boolean, String?) -> Unit) {
