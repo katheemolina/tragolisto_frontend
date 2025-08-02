@@ -76,7 +76,7 @@ fun ChatSelectorScreen(
     val scope = rememberCoroutineScope()
 
     var selectedChatId by remember { mutableStateOf<Int?>(null) }
-    var selectedChatTitle by remember { mutableStateOf<String?>(null) }
+    var selectedChatTitle by remember { mutableStateOf<String?>("Nuevo Chat") }
     var isMenuVisible by remember { mutableStateOf(false) }
 
     ModalNavigationDrawer(

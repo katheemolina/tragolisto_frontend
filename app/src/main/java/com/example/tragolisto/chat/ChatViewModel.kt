@@ -27,6 +27,9 @@ class ChatViewModel(private val tragoDao: TragoDao) : ViewModel() {
     private val _messages = MutableStateFlow<List<Message>>(emptyList())
     val messages: StateFlow<List<Message>> = _messages
 
+    private val _isCargandoMensajes = MutableStateFlow(false)
+    val isCargandoMensajes: StateFlow<Boolean> = _isCargandoMensajes
+
     private val _snackbarMessage = MutableStateFlow<String?>(null)
     val snackbarMessage: StateFlow<String?> = _snackbarMessage
 
@@ -38,6 +41,7 @@ class ChatViewModel(private val tragoDao: TragoDao) : ViewModel() {
 
     fun cargarMensajesDeChat(chatTitle: String) {
         viewModelScope.launch {
+            _isCargandoMensajes.value = true
             try {
                 val chatsResponse = FerniApiService.api.obtenerChats(userId)
                 if (chatsResponse.isSuccessful) {
@@ -59,7 +63,6 @@ class ChatViewModel(private val tragoDao: TragoDao) : ViewModel() {
                         }
                     }
                 }
-                // Si no hay historial, iniciar con saludo
                 if (_messages.value.isEmpty()) {
                     _messages.value = listOf(
                         Message(
@@ -79,6 +82,8 @@ class ChatViewModel(private val tragoDao: TragoDao) : ViewModel() {
                     )
                 )
                 messageId = 1
+            } finally {
+                _isCargandoMensajes.value = false
             }
         }
     }

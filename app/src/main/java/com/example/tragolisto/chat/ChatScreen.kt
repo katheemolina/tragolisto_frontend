@@ -40,6 +40,7 @@ fun ChatScreen(
     val snackbarMessage by viewModel.snackbarMessage.collectAsState()
     var inputText by remember { mutableStateOf("") }
     val snackbarHostState = remember { SnackbarHostState() }
+    val isCargando by viewModel.isCargandoMensajes.collectAsState()
 
     LaunchedEffect(chatTitle) {
         viewModel.cargarMensajesDeChat(chatTitle)
@@ -118,21 +119,30 @@ fun ChatScreen(
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(horizontal = 8.dp),
-            reverseLayout = true,
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            items(messages.reversed()) { message ->
-                MessageItem(
-                    message = message,
-                    onSaveRecipe = { recipeData ->
-                        viewModel.guardarReceta(recipeData)
-                    }
-                )
+        if (isCargando) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator()
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .padding(horizontal = 8.dp),
+                reverseLayout = true,
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(messages.reversed()) { message ->
+                    MessageItem(
+                        message = message,
+                        onSaveRecipe = { recipeData ->
+                            viewModel.guardarReceta(recipeData)
+                        }
+                    )
+                }
             }
         }
     }

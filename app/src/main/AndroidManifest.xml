@@ -5,6 +5,8 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="androidx.credentials.TYPE_NO_CREDENTIAL" />
+    <uses-permission android:name="androidx.credentials.TYPE_USER_CANCELEDs" />
 
     <application
         android:allowBackup="true"

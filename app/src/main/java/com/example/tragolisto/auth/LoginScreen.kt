@@ -85,7 +85,7 @@ class LoginScreen : ComponentActivity() {
     private fun launchGoogleSignIn() {
         val googleIdOption = GetGoogleIdOption.Builder()
             .setServerClientId(getString(R.string.default_web_client_id))
-            .setFilterByAuthorizedAccounts(false) // Cambia a true si querés limitar solo a cuentas ya autorizadas
+            .setFilterByAuthorizedAccounts(false) // false = permite elegir cuentas nuevas también
             .build()
 
         val request = GetCredentialRequest.Builder()
@@ -101,11 +101,65 @@ class LoginScreen : ComponentActivity() {
                     )
                     handleSignIn(result.credential)
                 } catch (e: GetCredentialException) {
-                    Log.e("LoginScreen", "Error al obtener credenciales: ${e.localizedMessage}")
+                    Log.e("LoginScreen", "Error al obtener credenciales: ${e.message}")
+
+                    // Mostrar error y detener loading
+                    runOnUiThread {
+                        setContent {
+                            TragoListoTheme {
+                                Surface(modifier = Modifier.fillMaxSize()) {
+                                    LoginScreenContent(
+                                        isLoading = false,
+                                        errorMessage = when (e.type) {
+                                            "androidx.credentials.TYPE_NO_CREDENTIAL" ->
+                                                "No se encontró ninguna cuenta de Google en el dispositivo."
+                                            "androidx.credentials.TYPE_USER_CANCELED" ->
+                                                "Inicio de sesión cancelado por el usuario."
+                                            else ->
+                                                "Error al iniciar sesión: ${e.message}"
+                                        },
+                                        onGoogleSignIn = { launchGoogleSignIn() }
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                } catch (e: Exception) {
+                    Log.e("LoginScreen", "Excepción inesperada: ${e.message}")
+                    runOnUiThread {
+                        setContent {
+                            TragoListoTheme {
+                                Surface(modifier = Modifier.fillMaxSize()) {
+                                    LoginScreenContent(
+                                        isLoading = false,
+                                        errorMessage = "Error inesperado: ${e.message}",
+                                        onGoogleSignIn = { launchGoogleSignIn() }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            } else {
+                // Opcional: manejar dispositivos que no cumplen con la API mínima
+                runOnUiThread {
+                    setContent {
+                        TragoListoTheme {
+                            Surface(modifier = Modifier.fillMaxSize()) {
+                                LoginScreenContent(
+                                    isLoading = false,
+                                    errorMessage = "Tu versión de Android no es compatible con el inicio de sesión con Google.",
+                                    onGoogleSignIn = { launchGoogleSignIn() }
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }
     }
+
 
     private fun handleSignIn(credential: androidx.credentials.Credential) {
         if (credential is androidx.credentials.CustomCredential &&
