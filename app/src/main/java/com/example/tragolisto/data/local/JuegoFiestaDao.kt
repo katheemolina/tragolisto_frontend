@@ -10,6 +10,12 @@ interface JuegoFiestaDao {
     @Query("SELECT * FROM juegos_fiesta")
     suspend fun obtenerTodos(): List<JuegoFiestaLocal>
 
+    @Query("SELECT * FROM juegos_fiesta WHERE id = :id")
+    suspend fun obtenerPorId(id: Int): JuegoFiestaLocal?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertarTodos(juegos: List<JuegoFiestaLocal>)
+    
+    @Query("DELETE FROM juegos_fiesta")
+    suspend fun limpiarTodos()
 } 

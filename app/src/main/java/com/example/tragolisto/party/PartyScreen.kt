@@ -8,6 +8,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -25,6 +26,7 @@ import com.example.tragolisto.data.model.JuegoFiesta
 import com.example.tragolisto.ui.viewmodel.JuegoDetalleUiState
 import com.example.tragolisto.ui.viewmodel.JuegosFiestaUiState
 import com.example.tragolisto.ui.viewmodel.JuegosFiestaViewModel
+import com.example.tragolisto.ui.viewmodel.JuegosFiestaViewModelFactory
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.background
@@ -33,20 +35,15 @@ import kotlinx.coroutines.launch
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.example.tragolisto.data.local.AppDatabase
+import com.example.tragolisto.data.global.usuarioglobal
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PartyScreen(
     onBackClick: () -> Unit
 ) {
-    val context = LocalContext.current
-    val db = remember { AppDatabase.DatabaseProvider.getDatabase(context) }
     val viewModel: JuegosFiestaViewModel = viewModel(
-        factory = object : ViewModelProvider.Factory {
-            override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                return JuegosFiestaViewModel(juegoFiestaDao = db.juegoFiestaDao) as T
-            }
-        }
+        factory = JuegosFiestaViewModelFactory()
     )
     val uiState by viewModel.uiState.collectAsState()
     val juegoDetalleState by viewModel.juegoDetalleState.collectAsState()
@@ -87,6 +84,22 @@ fun PartyScreen(
                             contentDescription = "Volver"
                         )
                     }
+                },
+                actions = {
+                    // Botón temporal de debug
+                    IconButton(onClick = { viewModel.forzarModoOffline() }) {
+                        Icon(
+                            imageVector = Icons.Default.Refresh,
+                            contentDescription = "Forzar Offline"
+                        )
+                    }
+                    // Botón para verificar juegos
+                    IconButton(onClick = { viewModel.verificarJuegosDisponibles() }) {
+                        Icon(
+                            imageVector = Icons.Default.Info,
+                            contentDescription = "Verificar Juegos"
+                        )
+                    }
                 }
             )
         }
@@ -105,10 +118,14 @@ fun PartyScreen(
                     var juegos = (uiState as JuegosFiestaUiState.Success).juegos
 
                     juegos = juegos.filter {
-                        (categoriaSeleccionada == "Todas" || it.categoria.equals(categoriaSeleccionada, ignoreCase = true)) &&
+                        val puedeVerEsteJuego = if (it.esParaBeber) (usuarioglobal?.esMayor != false) else true
+
+                        puedeVerEsteJuego &&
+                                (categoriaSeleccionada == "Todas" || it.categoria.equals(categoriaSeleccionada, ignoreCase = true)) &&
                                 (!soloParaBeber || it.esParaBeber) &&
                                 (busqueda.text.isBlank() || it.nombre.contains(busqueda.text, ignoreCase = true))
                     }
+
 
                     Column(modifier = Modifier.fillMaxSize()) {
                         Column(modifier = Modifier.padding(16.dp)) {
@@ -158,15 +175,17 @@ fun PartyScreen(
                             Spacer(modifier = Modifier.height(12.dp))
 
                             // FILTRO "PARA BEBER"
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.Center
-                            ) {
-                                FilterToggleButton(
-                                    text = "🍻 Para beber",
-                                    selected = soloParaBeber,
-                                    onClick = { soloParaBeber = !soloParaBeber }
-                                )
+                            if (usuarioglobal?.esMayor != false) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.Center
+                                ) {
+                                    FilterToggleButton(
+                                        text = "🍻 Para beber",
+                                        selected = soloParaBeber,
+                                        onClick = { soloParaBeber = !soloParaBeber }
+                                    )
+                                }
                             }
                         }
 

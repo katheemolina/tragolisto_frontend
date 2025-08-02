@@ -13,7 +13,9 @@ import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 import com.example.tragolisto.data.local.JuegoFiestaDao
 import com.example.tragolisto.data.local.JuegoFiestaLocal
+import com.example.tragolisto.data.local.JuegosFiestaData
 import com.example.tragolisto.data.global.usuarioglobal
+import com.example.tragolisto.TragoListoApplication
 
 sealed class JuegosFiestaUiState {
     object Loading : JuegosFiestaUiState()
@@ -28,8 +30,7 @@ sealed class JuegoDetalleUiState {
 }
 
 class JuegosFiestaViewModel(
-    private val repository: JuegosFiestaRepository = JuegosFiestaRepository(),
-    private val juegoFiestaDao: JuegoFiestaDao? = null // Nuevo parámetro opcional
+    private val repository: JuegosFiestaRepository = JuegosFiestaRepository()
 ) : ViewModel() {
     private val TAG = "JuegosFiestaViewModel"
     private val _uiState = MutableStateFlow<JuegosFiestaUiState>(JuegosFiestaUiState.Loading)
@@ -47,19 +48,31 @@ class JuegosFiestaViewModel(
         viewModelScope.launch {
             _uiState.value = JuegosFiestaUiState.Loading
             try {
+                Log.d(TAG, "usuarioglobal: $usuarioglobal")
+                Log.d(TAG, "idToken: ${usuarioglobal?.idToken}")
                 val esModoOffline = usuarioglobal?.idToken == "offline"
-                val juegos = if (esModoOffline && juegoFiestaDao != null) {
+                Log.d(TAG, "Modo offline: $esModoOffline")
+                val juegos = if (esModoOffline) {
                     // Cargar desde Room
+                    val juegoFiestaDao = TragoListoApplication.database.juegoFiestaDao
                     val lista = juegoFiestaDao.obtenerTodos()
-                    if (lista.isEmpty()) {
-                        // Poblar si está vacío
-                        juegoFiestaDao.insertarTodos(juegosFiestaOffline)
-                        juegoFiestaDao.obtenerTodos()
+                    Log.d(TAG, "Juegos en Room: ${lista.size}")
+                    
+                    if (lista.isEmpty() || lista.size < JuegosFiestaData.juegosFiestaOffline.size) {
+                        // Poblar si está vacío o tiene menos juegos de los esperados
+                        Log.d(TAG, "Repoblando base de datos con ${JuegosFiestaData.juegosFiestaOffline.size} juegos (tenía ${lista.size})")
+                        juegoFiestaDao.limpiarTodos()
+                        juegoFiestaDao.insertarTodos(JuegosFiestaData.juegosFiestaOffline)
+                        val nuevaLista = juegoFiestaDao.obtenerTodos()
+                        Log.d(TAG, "Después de poblar: ${nuevaLista.size} juegos")
+                        nuevaLista
                     } else {
+                        Log.d(TAG, "Usando ${lista.size} juegos existentes en Room")
                         lista
                     }
                 } else {
                     // Cargar desde la API
+                    Log.d(TAG, "Cargando desde API")
                     repository.getJuegos()
                 }
                 // Convertir a modelo de UI si es necesario
@@ -81,13 +94,45 @@ class JuegosFiestaViewModel(
         viewModelScope.launch {
             _juegoDetalleState.value = JuegoDetalleUiState.Loading
             try {
-                val juego = repository.getJuegoDetalle(id)
+                val esModoOffline = usuarioglobal?.idToken == "offline"
+                Log.d(TAG, "Cargando detalle del juego $id, modo offline: $esModoOffline")
+                
+                val juego = if (esModoOffline) {
+                    // Cargar desde Room
+                    val juegoFiestaDao = TragoListoApplication.database.juegoFiestaDao
+                    val juegoLocal = juegoFiestaDao.obtenerPorId(id)
+                    if (juegoLocal != null) {
+                        Log.d(TAG, "Juego $id encontrado en base de datos local")
+                        juegoLocal.toJuegoFiesta()
+                    } else {
+                        Log.e(TAG, "Juego $id no encontrado en base de datos local")
+                        // Intentar repoblar la base de datos y buscar de nuevo
+                        Log.d(TAG, "Intentando repoblar base de datos y buscar de nuevo")
+                        juegoFiestaDao.limpiarTodos()
+                        juegoFiestaDao.insertarTodos(JuegosFiestaData.juegosFiestaOffline)
+                        val juegoRepoblado = juegoFiestaDao.obtenerPorId(id)
+                        if (juegoRepoblado != null) {
+                            Log.d(TAG, "Juego $id encontrado después de repoblar")
+                            juegoRepoblado.toJuegoFiesta()
+                        } else {
+                            throw Exception("Juego con ID $id no encontrado en la base de datos local")
+                        }
+                    }
+                } else {
+                    // Cargar desde la API
+                    repository.getJuegoDetalle(id)
+                }
+                
                 _juegoDetalleState.value = JuegoDetalleUiState.Success(juego)
+                Log.d(TAG, "Detalle del juego $id cargado exitosamente")
             } catch (e: UnknownHostException) {
+                Log.e(TAG, "Error de conexión al cargar detalle del juego $id: ${e.message}")
                 _juegoDetalleState.value = JuegoDetalleUiState.Error("No se pudo conectar al servidor. Verifica tu conexión a internet.")
             } catch (e: SocketTimeoutException) {
+                Log.e(TAG, "Timeout al cargar detalle del juego $id: ${e.message}")
                 _juegoDetalleState.value = JuegoDetalleUiState.Error("La conexión al servidor tardó demasiado. Intenta de nuevo.")
             } catch (e: Exception) {
+                Log.e(TAG, "Error al cargar detalle del juego $id: ${e.message}")
                 _juegoDetalleState.value = JuegoDetalleUiState.Error("Error al cargar los detalles del juego: ${e.message}")
             }
         }
@@ -95,6 +140,71 @@ class JuegosFiestaViewModel(
 
     fun limpiarJuegoDetalle() {
         _juegoDetalleState.value = null
+    }
+
+    fun repoblarBaseDeDatos() {
+        viewModelScope.launch {
+            try {
+                val juegoFiestaDao = TragoListoApplication.database.juegoFiestaDao
+                Log.d(TAG, "Limpiando y repoblando base de datos")
+                // Limpiar todos los datos existentes
+                juegoFiestaDao.limpiarTodos()
+                // Insertar todos los juegos
+                juegoFiestaDao.insertarTodos(JuegosFiestaData.juegosFiestaOffline)
+                Log.d(TAG, "Base de datos repoblada con ${JuegosFiestaData.juegosFiestaOffline.size} juegos")
+                // Recargar los juegos
+                cargarJuegos()
+            } catch (e: Exception) {
+                Log.e(TAG, "Error al repoblar la base de datos: ${e.message}")
+            }
+        }
+    }
+
+    fun forzarModoOffline() {
+        viewModelScope.launch {
+            try {
+                Log.d(TAG, "Forzando modo offline")
+                // Forzar modo offline temporalmente
+                val juegoFiestaDao = TragoListoApplication.database.juegoFiestaDao
+                val lista = juegoFiestaDao.obtenerTodos()
+                Log.d(TAG, "Juegos en Room: ${lista.size}")
+                
+                if (lista.size < JuegosFiestaData.juegosFiestaOffline.size) {
+                    Log.d(TAG, "Repoblando base de datos")
+                    juegoFiestaDao.limpiarTodos()
+                    juegoFiestaDao.insertarTodos(JuegosFiestaData.juegosFiestaOffline)
+                }
+                
+                // Cargar directamente desde Room
+                val juegos = juegoFiestaDao.obtenerTodos()
+                val juegosFiesta = juegos.map { it.toJuegoFiesta() }
+                _uiState.value = JuegosFiestaUiState.Success(juegosFiesta)
+                Log.d(TAG, "Cargados ${juegosFiesta.size} juegos en modo offline")
+                
+                // Debug: mostrar todos los IDs disponibles
+                Log.d(TAG, "IDs disponibles: ${juegos.map { it.id }}")
+            } catch (e: Exception) {
+                Log.e(TAG, "Error al forzar modo offline: ${e.message}")
+                _uiState.value = JuegosFiestaUiState.Error("Error: ${e.message}")
+            }
+        }
+    }
+
+    fun verificarJuegosDisponibles() {
+        viewModelScope.launch {
+            try {
+                val juegoFiestaDao = TragoListoApplication.database.juegoFiestaDao
+                val juegos = juegoFiestaDao.obtenerTodos()
+                Log.d(TAG, "=== VERIFICACIÓN DE JUEGOS ===")
+                Log.d(TAG, "Total de juegos en BD: ${juegos.size}")
+                juegos.forEach { juego ->
+                    Log.d(TAG, "ID: ${juego.id}, Nombre: ${juego.nombre}")
+                }
+                Log.d(TAG, "=== FIN VERIFICACIÓN ===")
+            } catch (e: Exception) {
+                Log.e(TAG, "Error al verificar juegos: ${e.message}")
+            }
+        }
     }
 }
 
@@ -112,10 +222,4 @@ fun JuegoFiestaLocal.toJuegoFiesta(): JuegoFiesta = JuegoFiesta(
     updatedAt = "1970-01-01T00:00:00Z"  // Valor por defecto
 )
 
-// Lista de juegos offline (puedes moverla a un archivo común si ya existe)
-val juegosFiestaOffline = listOf(
-    JuegoFiestaLocal(1, "Yo Nunca Nunca", "Un clásico juego de fiesta donde los participantes dicen algo que nunca han hecho, y si alguien sí lo ha hecho, debe tomar.", "De preguntas", "Ninguno", 3, null, true),
-    JuegoFiestaLocal(2, "Adivina la Canción", "Reproduce el inicio de una canción y los demás deben adivinar el título o el artista. El primero en acertar gana un punto.", "Musical", "Dispositivo de audio, lista de canciones", 2, null, false),
-    JuegoFiestaLocal(25, "Círculo de la Muerte (Kings Cup)", "Un juego de cartas donde cada carta tiene una regla asociada que los jugadores deben seguir, a menudo involucrando beber.", "Con elementos", "Baraja de cartas, vasos, bebida", 3, null, true)
-    // ... agrega el resto de los juegos aquí ...
-) 
+ 
