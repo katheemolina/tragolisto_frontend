@@ -81,7 +81,12 @@ class TragosViewModel(
                         lista
                     }
                 } else {
-                    val response = repository.getTragos()
+                    val userId = usuarioglobal?.id_usuario
+                    if (userId == null) {
+                        return@launch
+                    }
+
+                    val response = repository.getTragos(userId)
                     response.tragos
                 }
 

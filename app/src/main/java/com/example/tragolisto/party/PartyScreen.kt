@@ -86,20 +86,7 @@ fun PartyScreen(
                     }
                 },
                 actions = {
-                    // Botón temporal de debug
-                    IconButton(onClick = { viewModel.forzarModoOffline() }) {
-                        Icon(
-                            imageVector = Icons.Default.Refresh,
-                            contentDescription = "Forzar Offline"
-                        )
-                    }
-                    // Botón para verificar juegos
-                    IconButton(onClick = { viewModel.verificarJuegosDisponibles() }) {
-                        Icon(
-                            imageVector = Icons.Default.Info,
-                            contentDescription = "Verificar Juegos"
-                        )
-                    }
+
                 }
             )
         }

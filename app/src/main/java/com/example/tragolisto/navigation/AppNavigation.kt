@@ -69,7 +69,9 @@ fun AppNavigation(requiresOnboarding: Boolean) { // <-- ¡Añadimos este paráme
 
 
         composable(Screen.Chat.route) {
-            ChatSelectorScreen()
+            ChatSelectorScreen(
+                onBackClick = { navController.popBackStack() }
+            )
         }
 
         composable(Screen.Favorites.route) {

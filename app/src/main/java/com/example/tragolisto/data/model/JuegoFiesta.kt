@@ -9,6 +9,7 @@ data class JuegoFiesta(
     val id: Int,
     val nombre: String,
     val descripcion: String,
+    val video: String?,            // <-- nuevo campo, nullable
     val categoria: String,
     val materiales: String,
     @SerializedName("min_jugadores")
@@ -22,7 +23,6 @@ data class JuegoFiesta(
     @SerializedName("updated_at")
     val updatedAt: String
 ) {
-    // Función de extensión para convertir createdAt a LocalDateTime
     fun getCreatedAtDateTime(): LocalDateTime? {
         return try {
             LocalDateTime.parse(createdAt, DateTimeFormatter.ISO_DATE_TIME)
@@ -31,7 +31,6 @@ data class JuegoFiesta(
         }
     }
 
-    // Función de extensión para convertir updatedAt a LocalDateTime
     fun getUpdatedAtDateTime(): LocalDateTime? {
         return try {
             LocalDateTime.parse(updatedAt, DateTimeFormatter.ISO_DATE_TIME)
@@ -40,8 +39,3 @@ data class JuegoFiesta(
         }
     }
 }
-
-data class JuegosFiestaResponse(
-    val total: Int,
-    val juegos: List<JuegoFiesta>
-) 

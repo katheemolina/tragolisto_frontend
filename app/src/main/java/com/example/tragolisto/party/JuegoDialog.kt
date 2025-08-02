@@ -9,27 +9,28 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
 import coil.compose.rememberAsyncImagePainter
 import com.example.tragolisto.data.model.JuegoFiesta
+import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.YouTubePlayer
+import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.listeners.AbstractYouTubePlayerListener
+import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.views.YouTubePlayerView
 import kotlin.text.toRegex
 
-// Función para extraer el ID del video y limpiar la descripción (definida anteriormente por la base de datos)
 fun extractYouTubeVideoIdAndCleanDescription(description: String): Pair<String?, String> {
-    val youtubeRegex = """(?:https?://)?(?:www\.)?(?:youtube\.com/(?:watch\?v=|embed/|v/|shorts/)|youtu\.be/)([a-zA-Z0-9_-]{11})(?:\?[^\s]*)?""".toRegex()
+    val youtubeRegex =
+        """(?:https?://)?(?:www\.)?(?:youtube\.com/(?:watch\?v=|embed/|v/|shorts/)|youtu\.be/)([a-zA-Z0-9_-]{11})(?:\?[^\s]*)?""".toRegex()
     val matchResult = youtubeRegex.find(description)
 
     return if (matchResult != null) {
@@ -41,6 +42,13 @@ fun extractYouTubeVideoIdAndCleanDescription(description: String): Pair<String?,
     }
 }
 
+fun extractVideoIdFromUrl(videoUrl: String?): String? {
+    if (videoUrl.isNullOrBlank()) return null
+    val youtubeRegex =
+        """(?:https?://)?(?:www\.)?(?:youtube\.com/(?:watch\?v=|embed/|v/|shorts/)|youtu\.be/)([a-zA-Z0-9_-]{11})(?:\?[^\s]*)?""".toRegex()
+    return youtubeRegex.find(videoUrl)?.groupValues?.get(1)
+}
+
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun JuegoDialog(
@@ -48,11 +56,14 @@ fun JuegoDialog(
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
-    // Procesamos la descripción para extraer el ID del video y el texto limpio
-    // Usamos remember para que esto solo se calcule una vez o cuando 'juego.descripcion' cambie
-    val (videoId, cleanedDescription) = remember(juego.descripcion) {
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    // Extraer ID del video
+    val videoIdFromVideoField = extractVideoIdFromUrl(juego.video)
+    val (videoIdFromDescription, cleanedDescription) = remember(juego.descripcion) {
         extractYouTubeVideoIdAndCleanDescription(juego.descripcion)
     }
+    val videoId = videoIdFromVideoField ?: videoIdFromDescription
 
     Dialog(onDismissRequest = onDismiss) {
         Surface(
@@ -69,7 +80,7 @@ fun JuegoDialog(
                     .padding(20.dp)
                     .verticalScroll(rememberScrollState())
             ) {
-                // Cabecera
+                // Título
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
@@ -86,37 +97,30 @@ fun JuegoDialog(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Mostrar la miniatura del video si existe un ID
+                // YouTube player embebido
                 videoId?.let { id ->
-                    val thumbnailUrl = "https://img.youtube.com/vi/$id/0.jpg" // URL de la miniatura estándar
-                    Image(
-                        painter = rememberAsyncImagePainter(model = thumbnailUrl),
-                        contentDescription = "Miniatura del video de YouTube",
+                    AndroidView(
+                        factory = { context ->
+                            YouTubePlayerView(context).apply {
+                                lifecycleOwner.lifecycle.addObserver(this)
+                                addYouTubePlayerListener(object : AbstractYouTubePlayerListener() {
+                                    override fun onReady(player: YouTubePlayer) {
+                                        player.cueVideo(id, 0f)
+                                    }
+                                })
+                            }
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .aspectRatio(16f / 9f) // Proporción común para videos
-                            .clickable {
-                                // Abrir el video en la app de YouTube o en el navegador
-                                val appIntent =
-                                    Intent(Intent.ACTION_VIEW, Uri.parse("vnd.youtube:$id"))
-                                val webIntent = Intent(
-                                    Intent.ACTION_VIEW,
-                                    Uri.parse("http://www.youtube.com/watch?v=$id")
-                                )
-                                try {
-                                    context.startActivity(appIntent)
-                                } catch (ex: Exception) {
-                                    context.startActivity(webIntent)
-                                }
-                            },
-                        contentScale = ContentScale.Crop
+                            .aspectRatio(16f / 9f)
                     )
+
                     Spacer(modifier = Modifier.height(16.dp))
                 }
 
-                // Mostrar la descripción limpia (sin el enlace de YouTube)
+                // Descripción limpia
                 Text(
-                    text = cleanedDescription, // Usar la descripción limpia aquí
+                    text = cleanedDescription,
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurface
                 )
@@ -151,7 +155,7 @@ fun JuegoDialog(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Mensaje de bebidas
+                // Alerta si es juego con bebidas
                 if (juego.esParaBeber) {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
@@ -161,9 +165,7 @@ fun JuegoDialog(
                         shape = MaterialTheme.shapes.medium,
                         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                     ) {
-                        Column(
-                            modifier = Modifier.padding(16.dp)
-                        ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
                             Text(
                                 text = "¡Juego con bebidas!",
                                 style = MaterialTheme.typography.titleMedium.copy(
@@ -181,13 +183,14 @@ fun JuegoDialog(
                         }
                     }
                 }
+
                 Spacer(modifier = Modifier.height(20.dp))
             }
         }
     }
 }
 
-// Reutilizamos InfoChip y SectionTitle de recipes para consistencia
+// Chips reutilizables
 @Composable
 private fun InfoChip(label: String, value: String) {
     AssistChip(

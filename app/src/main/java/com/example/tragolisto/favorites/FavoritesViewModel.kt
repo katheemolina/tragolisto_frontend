@@ -57,6 +57,8 @@ class FavoritesViewModel : ViewModel() {
                 ClientApi.obtenerFavoritos(userId) { favoritosResponse, error ->
                     if (favoritosResponse != null) {
                         _uiState.value = FavoritosUiState.Success(favoritosResponse)
+                    } else if (error?.contains("no se encontraron", ignoreCase = true) == true) {
+                        _uiState.value = FavoritosUiState.Success(emptyList())
                     } else {
                         _uiState.value = FavoritosUiState.Error(error ?: "Error desconocido")
                     }
@@ -66,6 +68,7 @@ class FavoritesViewModel : ViewModel() {
             }
         }
     }
+
 
     fun eliminarFavorito(favoritoId: Int, tragoId: Int) {
         ClientApi.eliminarFavorito(favoritoId) { success, message ->

@@ -3,7 +3,6 @@ package com.example.tragolisto.data.api
 import android.util.Log
 import com.example.tragolisto.data.model.BooleanDeserializer
 import com.example.tragolisto.data.model.JuegoFiesta
-import com.example.tragolisto.data.model.JuegosFiestaResponse
 import com.example.tragolisto.data.model.Trago
 import com.example.tragolisto.data.model.TragosResponse
 import com.google.gson.GsonBuilder

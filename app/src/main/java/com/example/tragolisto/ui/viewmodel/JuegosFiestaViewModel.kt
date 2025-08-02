@@ -218,6 +218,7 @@ fun JuegoFiestaLocal.toJuegoFiesta(): JuegoFiesta = JuegoFiesta(
     minJugadores = min_jugadores,
     maxJugadores = max_jugadores,
     esParaBeber = es_para_beber,
+    video = "",
     createdAt = "1970-01-01T00:00:00Z", // Valor por defecto
     updatedAt = "1970-01-01T00:00:00Z"  // Valor por defecto
 )

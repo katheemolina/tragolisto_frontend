@@ -131,4 +131,6 @@ dependencies {
     //Coil 2 para imagenes de yt
     implementation("io.coil-kt:coil-compose:2.6.0")
 
+    //Yt embebido
+    implementation 'com.pierfrancescosoffritti.androidyoutubeplayer:core:12.1.0'
 }
