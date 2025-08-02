@@ -10,6 +10,7 @@ import com.example.tragolisto.data.local.TragoLocal
 import com.example.tragolisto.data.model.RecetaChat
 import com.google.gson.Gson
 import com.google.gson.JsonSyntaxException
+import com.google.gson.stream.JsonReader
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -64,10 +65,18 @@ class ChatViewModel(private val tragoDao: TragoDao) : ViewModel() {
                         val mensajesResponse = FerniApiService.api.obtenerMensajes(meta.id)
                         if (mensajesResponse.isSuccessful) {
                             val historial = mensajesResponse.body()?.mapIndexed { index, msg ->
+                                val (isRecipe, recipeData) = if (msg.sender == "bot") {
+                                    parseRecipeResponse(msg.content)
+                                } else {
+                                    false to null
+                                }
+
                                 Message(
                                     id = index,
                                     text = msg.content,
-                                    role = msg.sender
+                                    role = msg.sender,
+                                    isRecipe = isRecipe,
+                                    recipeData = recipeData
                                 )
                             } ?: emptyList()
                             _messages.value = historial
@@ -75,6 +84,7 @@ class ChatViewModel(private val tragoDao: TragoDao) : ViewModel() {
                         }
                     }
                 }
+
                 if (_messages.value.isEmpty()) {
                     _messages.value = listOf(
                         Message(
@@ -99,6 +109,7 @@ class ChatViewModel(private val tragoDao: TragoDao) : ViewModel() {
             }
         }
     }
+
 
     fun enviarMensajeAlChat(texto: String) {
         if (texto.isBlank()) return
@@ -136,36 +147,20 @@ class ChatViewModel(private val tragoDao: TragoDao) : ViewModel() {
     private fun agregarRespuestaFerni(reply: String) {
         var finalReply = reply
 
-        if (reply.trim().startsWith("{") || reply.contains("```")) {
-            try {
-                Log.d("DEBUG", "Respuesta recibida: $reply")
-                val (isRecipe, recipeData) = parseRecipeResponse(reply)
-                Log.d("DEBUG", "¿Es receta? $isRecipe - ¿Data? ${recipeData != null}")
+        val (isRecipe, recipeData) = parseRecipeResponse(reply)
+        Log.d("DEBUG", "Respuesta recibida: $reply")
+        Log.d("DEBUG", "¿Es receta? $isRecipe - ¿Data? ${recipeData != null}")
 
-                val nuevoMensajeFerni = Message(
-                    id = messageId++,
-                    text = reply,
-                    role = "assistant",
-                    isRecipe = isRecipe,
-                    recipeData = recipeData
-                )
-
-                _messages.value = _messages.value + nuevoMensajeFerni
-                return
-            } catch (e: Exception) {
-                Log.e("ParseFerni", "Fallo al parsear receta: ${e.message}")
-            }
-        }
-
-        // fallback si no se detectó receta
-        val fallbackMessage = Message(
+        val nuevoMensajeFerni = Message(
             id = messageId++,
             text = reply,
-            role = "assistant"
+            role = "assistant",
+            isRecipe = isRecipe,
+            recipeData = recipeData
         )
-        _messages.value = _messages.value + fallbackMessage
-    }
 
+        _messages.value = _messages.value + nuevoMensajeFerni
+    }
 
     private fun agregarMensajeDeError(error: String) {
         val errorMsg = Message(id = messageId++, text = error, role = "assistant")
@@ -174,20 +169,18 @@ class ChatViewModel(private val tragoDao: TragoDao) : ViewModel() {
 
     private fun parseRecipeResponse(response: String): Pair<Boolean, RecetaChat?> {
         return try {
-            val cleanedJson = response
-                .replace("```json", "")
-                .replace("```", "")
-                .trim()
+            val regex = Regex("```json\\s*(\\{.*?\\})\\s*```", RegexOption.DOT_MATCHES_ALL)
+            val match = regex.find(response)
+            val cleanedJson = match?.groups?.get(1)?.value?.trim() ?: response.trim()
 
-            val receta = gson.fromJson(cleanedJson, RecetaChat::class.java)
-            if (receta.type == "recipe") {
-                Pair(true, receta)
-            } else {
-                Pair(false, null)
-            }
-        } catch (_: JsonSyntaxException) {
-            Pair(false, null)
-        } catch (_: Exception) {
+            val reader = JsonReader(cleanedJson.reader())
+            reader.isLenient = true
+
+            val receta = gson.fromJson<RecetaChat>(reader, RecetaChat::class.java)
+            val esReceta = receta?.type == "recipe" && receta.data != null
+            Pair(esReceta, if (esReceta) receta else null)
+        } catch (e: Exception) {
+            Log.e("ParseFerni", "Error al parsear receta: ${e.message}")
             Pair(false, null)
         }
     }
