@@ -43,7 +43,11 @@ fun ChatScreen(
     val isCargando by viewModel.isCargandoMensajes.collectAsState()
 
     LaunchedEffect(chatTitle) {
-        viewModel.cargarMensajesDeChat(chatTitle)
+        if (chatTitle == "Nuevo Chat") {
+            viewModel.limpiarMensajes()
+        } else {
+            viewModel.cargarMensajesDeChat(chatTitle)
+        }
     }
 
     LaunchedEffect(snackbarMessage) {
@@ -57,30 +61,6 @@ fun ChatScreen(
         modifier = Modifier
             .fillMaxSize()
             .imePadding(),
-        topBar = {
-            TopAppBar(
-                title = {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(
-                            text = chatTitle,
-                            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                            textAlign = TextAlign.Center
-                        )
-                    }
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(
-                            imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "Volver"
-                        )
-                    }
-                }
-            )
-        },
         bottomBar = {
             Row(
                 modifier = Modifier

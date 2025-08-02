@@ -25,6 +25,8 @@ import com.example.tragolisto.data.api.FerniApiService
 import kotlinx.coroutines.launch
 import com.example.tragolisto.data.global.*
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 
 class ChatSelectorViewModel : ViewModel() {
 
@@ -109,16 +111,18 @@ fun ChatSelectorScreen(
                         modifier = Modifier.padding(16.dp)
                     )
                 } else {
-                    viewModel.chats.forEach { chat ->
-                        NavigationDrawerItem(
-                            label = { Text(chat.title) }, // Podés usar otro campo para mostrar título
-                            selected = chat.id == selectedChatId,
-                            onClick = {
-                                selectedChatId = chat.id
-                                selectedChatTitle = chat.title
-                                scope.launch { drawerState.close() }
-                            }
-                        )
+                    LazyColumn(modifier = Modifier.fillMaxHeight()) {
+                        items(viewModel.chats) { chat ->
+                            NavigationDrawerItem(
+                                label = { Text(chat.title) },
+                                selected = chat.id == selectedChatId,
+                                onClick = {
+                                    selectedChatId = chat.id
+                                    selectedChatTitle = chat.title
+                                    scope.launch { drawerState.close() }
+                                }
+                            )
+                        }
                     }
                 }
             }
@@ -142,7 +146,7 @@ fun ChatSelectorScreen(
                         }
                     },
                     actions = {
-                        IconButton(onClick = { isMenuVisible = true }) {
+                        IconButton(onClick = { scope.launch { drawerState.open() } }) {
                             Icon(Icons.Default.Menu, contentDescription = "Abrir menú")
                         }
                     }
@@ -171,16 +175,6 @@ fun ChatSelectorScreen(
                 }
             }
 
-            // Fondo oscuro que cierra el menú al hacer clic
-            if (isMenuVisible) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.4f))
-                        .clickable { isMenuVisible = false }
-                )
-            }
-
             // Menú deslizante desde la derecha
             AnimatedVisibility(
                 visible = isMenuVisible,
@@ -199,40 +193,44 @@ fun ChatSelectorScreen(
                         shape = RoundedCornerShape(topStart = 16.dp, bottomStart = 16.dp),
                         tonalElevation = 8.dp
                     ) {
-                        Column(
+                        LazyColumn(
                             modifier = Modifier
                                 .fillMaxSize()
                                 .padding(16.dp)
                         ) {
-                            Text(
-                                "Mis Chats",
-                                style = MaterialTheme.typography.titleMedium,
-                                modifier = Modifier.padding(bottom = 16.dp)
-                            )
-
-                            Divider()
-
-                            TextButton(
-                                onClick = {
-                                    selectedChatId = null
-                                    selectedChatTitle = "Nuevo Chat"
-                                    isMenuVisible = false
-                                },
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Text("➕ Nuevo Chat")
+                            item {
+                                Text(
+                                    "Mis Chats",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    modifier = Modifier.padding(bottom = 16.dp)
+                                )
+                                Divider()
+                                TextButton(
+                                    onClick = {
+                                        selectedChatId = null
+                                        selectedChatTitle = "Nuevo Chat"
+                                        isMenuVisible = false
+                                    },
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text("➕ Nuevo Chat")
+                                }
                             }
 
                             if (viewModel.isLoading) {
-                                Text("Cargando chats...", modifier = Modifier.padding(16.dp))
+                                item {
+                                    Text("Cargando chats...", modifier = Modifier.padding(16.dp))
+                                }
                             } else if (viewModel.errorMessage != null) {
-                                Text(
-                                    text = viewModel.errorMessage ?: "",
-                                    color = MaterialTheme.colorScheme.error,
-                                    modifier = Modifier.padding(16.dp)
-                                )
+                                item {
+                                    Text(
+                                        text = viewModel.errorMessage ?: "",
+                                        color = MaterialTheme.colorScheme.error,
+                                        modifier = Modifier.padding(16.dp)
+                                    )
+                                }
                             } else {
-                                viewModel.chats.forEach { chat ->
+                                items(viewModel.chats) { chat ->
                                     TextButton(
                                         onClick = {
                                             selectedChatId = chat.id
@@ -246,13 +244,14 @@ fun ChatSelectorScreen(
                                 }
                             }
 
-                            Spacer(modifier = Modifier.weight(1f))
-
-                            TextButton(
-                                onClick = { isMenuVisible = false },
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Text("Cerrar menú")
+                            item {
+                                Spacer(modifier = Modifier.height(24.dp))
+                                TextButton(
+                                    onClick = { isMenuVisible = false },
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text("Cerrar menú")
+                                }
                             }
                         }
                     }

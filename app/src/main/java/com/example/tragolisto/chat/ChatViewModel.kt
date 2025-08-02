@@ -39,6 +39,18 @@ class ChatViewModel(private val tragoDao: TragoDao) : ViewModel() {
     private var chatId: Int? = null
     private val userId: Int? = usuarioglobal?.id_usuario
 
+    fun limpiarMensajes() {
+        _messages.value = listOf(
+            Message(
+                id = 0,
+                text = "¡Hola! Soy Ferni, tu bartender virtual 🍸 ¿Qué ingredientes tenés hoy?",
+                role = "assistant"
+            )
+        )
+        messageId = 1
+        chatId = null
+    }
+
     fun cargarMensajesDeChat(chatTitle: String) {
         viewModelScope.launch {
             _isCargandoMensajes.value = true
