@@ -19,4 +19,4 @@ class JuegosFiestaRepository {
         }
         return response.body() ?: throw Exception("No se encontró el juego")
     }
-} 
+}

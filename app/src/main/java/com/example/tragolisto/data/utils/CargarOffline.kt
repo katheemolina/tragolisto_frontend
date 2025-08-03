@@ -22,8 +22,11 @@ fun cargarRecetasOffline(context: Context): List<Trago> {
 fun cargarJuegosOffline(context: Context): List<JuegoFiesta> {
     val inputStream = context.resources.openRawResource(R.raw.default_juegos)
     val json = inputStream.bufferedReader().use { it.readText() }
-    val gson = GsonBuilder().registerTypeAdapter(Boolean::class.java, BooleanDeserializer()).create()
-    val type = object : TypeToken<JuegosResponse>() {}.type
-    val response: JuegosResponse = gson.fromJson(json, type)
-    return response.juegos
+
+    val gson = GsonBuilder()
+        .registerTypeAdapter(Boolean::class.java, BooleanDeserializer())
+        .create()
+
+    val type = object : TypeToken<List<JuegoFiesta>>() {}.type
+    return gson.fromJson(json, type)
 }

@@ -1,5 +1,6 @@
 package com.example.tragolisto.ui.viewmodel
 
+import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -15,6 +16,7 @@ import com.example.tragolisto.data.local.JuegoFiestaLocal
 import com.example.tragolisto.data.local.JuegosFiestaData
 import com.example.tragolisto.data.global.usuarioglobal
 import com.example.tragolisto.TragoListoApplication
+import com.example.tragolisto.data.utils.cargarJuegosOffline
 
 sealed class JuegosFiestaUiState {
     object Loading : JuegosFiestaUiState()
@@ -29,8 +31,10 @@ sealed class JuegoDetalleUiState {
 }
 
 class JuegosFiestaViewModel(
+    private val context: Context,
     private val repository: JuegosFiestaRepository = JuegosFiestaRepository()
 ) : ViewModel() {
+
     private val TAG = "JuegosFiestaViewModel"
     private val _uiState = MutableStateFlow<JuegosFiestaUiState>(JuegosFiestaUiState.Loading)
     val uiState: StateFlow<JuegosFiestaUiState> = _uiState.asStateFlow()
@@ -52,27 +56,14 @@ class JuegosFiestaViewModel(
             _uiState.value = JuegosFiestaUiState.Loading
             try {
                 val esModoOffline = usuarioglobal?.idToken == "offline"
-                val juegoFiestaDao = TragoListoApplication.database.juegoFiestaDao
 
                 val juegos = if (esModoOffline) {
-                    val lista = juegoFiestaDao.obtenerTodos()
-                    if (lista.isEmpty() || lista.size < JuegosFiestaData.juegosFiestaOffline.size) {
-                        juegoFiestaDao.limpiarTodos()
-                        juegoFiestaDao.insertarTodos(JuegosFiestaData.juegosFiestaOffline)
-                    }
-                    juegoFiestaDao.obtenerTodos()
+                    cargarJuegosOffline(context)
                 } else {
                     repository.getJuegos()
                 }
 
-                val juegosFiesta = juegos.map {
-                    when (it) {
-                        is JuegoFiesta -> it
-                        is JuegoFiestaLocal -> it.toJuegoFiesta()
-                        else -> throw Exception("Tipo de juego desconocido")
-                    }
-                }
-                _uiState.value = JuegosFiestaUiState.Success(juegosFiesta)
+                _uiState.value = JuegosFiestaUiState.Success(juegos)
             } catch (e: Exception) {
                 _uiState.value = JuegosFiestaUiState.Error("Error al cargar los juegos: ${e.message}")
             }
@@ -84,16 +75,10 @@ class JuegosFiestaViewModel(
             _juegoDetalleState.value = JuegoDetalleUiState.Loading
             try {
                 val esModoOffline = usuarioglobal?.idToken == "offline"
-                val juegoFiestaDao = TragoListoApplication.database.juegoFiestaDao
 
                 val juego = if (esModoOffline) {
-                    val juegoLocal = juegoFiestaDao.obtenerPorId(id) ?: run {
-                        juegoFiestaDao.limpiarTodos()
-                        juegoFiestaDao.insertarTodos(JuegosFiestaData.juegosFiestaOffline)
-                        juegoFiestaDao.obtenerPorId(id)
-                    } ?: throw Exception("Juego con ID $id no encontrado")
-
-                    juegoLocal.toJuegoFiesta()
+                    val lista = cargarJuegosOffline(context)
+                    lista.firstOrNull { it.id == id } ?: throw Exception("Juego con ID $id no encontrado")
                 } else {
                     repository.getJuegoDetalle(id)
                 }

@@ -44,17 +44,19 @@ import com.example.tragolisto.data.utils.cargarRecetasOffline
 fun PartyScreen(
     onBackClick: () -> Unit
 ) {
+    val context = LocalContext.current
     val viewModel: JuegosFiestaViewModel = viewModel(
-        factory = JuegosFiestaViewModelFactory()
+        factory = JuegosFiestaViewModelFactory(context)
     )
     val uiState by viewModel.uiState.collectAsState()
 
-    val context = LocalContext.current
 
     // Cargar tragos offline desde JSON y pasarlos al ViewModel
     LaunchedEffect(Unit) {
-        val JuegosOffline = cargarJuegosOffline(context)
-        viewModel.setJuegos(JuegosOffline)  // función que deberás agregar en tu ViewModel para setear tragos
+        if (uiState is JuegosFiestaUiState.Loading) {
+            val juegosOffline = cargarJuegosOffline(context)
+            viewModel.setJuegos(juegosOffline)
+        }
     }
 
     val juegoDetalleState by viewModel.juegoDetalleState.collectAsState()
