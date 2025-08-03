@@ -1,5 +1,6 @@
 package com.example.tragolisto.ui.viewmodel
 
+import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -9,6 +10,7 @@ import com.example.tragolisto.data.local.TragoDao
 import com.example.tragolisto.data.local.TragoLocal
 import com.example.tragolisto.data.model.Trago
 import com.example.tragolisto.data.repository.TragosRepository
+import com.example.tragolisto.data.utils.cargarRecetasOffline
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -62,42 +64,23 @@ class TragosViewModel(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptySet())
 
     init {
-        cargarTragos()
         cargarFavoritos()
     }
 
-    fun cargarTragos() {
+    fun cargarTragos(context: Context) {
         viewModelScope.launch {
             _uiState.value = TragosUiState.Loading
             try {
                 val esModoOffline = usuarioglobal?.idToken == "offline"
-                val tragos = if (esModoOffline && tragoDao != null) {
-                    val lista = tragoDao.obtenerTodos().first() // recolecta el primer valor del flow
-                    if (lista.isEmpty()) {
-                        // Poblar si está vacío
-                        tragoDao.insertarTodos(tragosOffline)
-                        tragoDao.obtenerTodos().first()
-                    } else {
-                        lista
-                    }
+
+                val tragos = if (esModoOffline) {
+                    cargarRecetasOffline(context)
                 } else {
-                    val userId = usuarioglobal?.id_usuario
-                    if (userId == null) {
-                        return@launch
-                    }
-
-                    val response = repository.getTragos(userId)
-                    response.tragos
+                    val userId = usuarioglobal?.id_usuario ?: throw Exception("Usuario no autenticado")
+                    repository.getTragos(userId).tragos
                 }
 
-                val tragosList = tragos.map {
-                    when (it) {
-                        is Trago -> it
-                        is TragoLocal -> it.toTrago()
-                        else -> throw Exception("Tipo de trago desconocido")
-                    }
-                }
-                _uiState.value = TragosUiState.Success(tragosList)
+                _uiState.value = TragosUiState.Success(tragos)
 
             } catch (e: Exception) {
                 _uiState.value = TragosUiState.Error("Error al cargar los tragos: ${e.message}")
@@ -105,12 +88,27 @@ class TragosViewModel(
         }
     }
 
+    fun setTragos(tragosOffline: List<Trago>) {
+        _uiState.value = TragosUiState.Success(tragosOffline)
+    }
 
     fun cargarTragoDetalle(id: Int) {
         viewModelScope.launch {
             _tragoDetalleState.value = TragoDetalleUiState.Loading
             try {
-                val trago = repository.getTragoDetalle(id)
+                val esModoOffline = usuarioglobal?.idToken == "offline"
+
+                val trago = if (esModoOffline) {
+                    val currentTragos = when(val state = _uiState.value) {
+                        is TragosUiState.Success -> state.tragos
+                        else -> emptyList()
+                    }
+                    currentTragos.firstOrNull { it.id == id }
+                        ?: throw Exception("Trago no encontrado en modo offline")
+                } else {
+                    repository.getTragoDetalle(id)
+                }
+
                 _tragoDetalleState.value = TragoDetalleUiState.Success(trago)
             } catch (e: UnknownHostException) {
                 _tragoDetalleState.value = TragoDetalleUiState.Error("No se pudo conectar al servidor. Verifica tu conexión a internet.")

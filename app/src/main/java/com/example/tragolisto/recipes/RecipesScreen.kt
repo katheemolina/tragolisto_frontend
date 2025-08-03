@@ -34,6 +34,8 @@ import com.example.tragolisto.ui.viewmodel.TragosUiState
 import com.example.tragolisto.ui.viewmodel.TragosViewModel
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.ui.platform.LocalContext
+import com.example.tragolisto.data.utils.cargarRecetasOffline
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -41,6 +43,15 @@ fun RecipesScreen(
     onBackClick: () -> Unit,
     viewModel: TragosViewModel = viewModel()
 ) {
+    val context = LocalContext.current
+
+    // Cargar tragos offline desde JSON y pasarlos al ViewModel
+    LaunchedEffect(Unit) {
+        val recetasOffline = cargarRecetasOffline(context)
+        viewModel.setTragos(recetasOffline)  // función que deberás agregar en tu ViewModel para setear tragos
+        viewModel.cargarFavoritos()
+    }
+
     val uiState by viewModel.uiState.collectAsState()
     val tragoDetalleState by viewModel.tragoDetalleState.collectAsState()
     val favoritoState by viewModel.favoritoState.collectAsState()
@@ -57,10 +68,8 @@ fun RecipesScreen(
         "Difícil" to "🤯 Difícil"
     )
 
-    // Snackbar para mostrar mensajes de favoritos
     val snackbarHostState = remember { SnackbarHostState() }
 
-    // Observar cambios en el estado de favoritos
     LaunchedEffect(favoritoState) {
         when (favoritoState) {
             is FavoritoUiState.Success -> {
@@ -135,7 +144,6 @@ fun RecipesScreen(
 
                             Spacer(modifier = Modifier.height(12.dp))
 
-                            // FILTROS DE DIFICULTAD EN SCROLL HORIZONTAL
                             Box(modifier = Modifier.fillMaxWidth()) {
                                 val scrollState = rememberScrollState()
                                 Row(
@@ -152,8 +160,6 @@ fun RecipesScreen(
                                         )
                                     }
                                 }
-
-                                // FADE LATERAL DERECHO
                                 Box(
                                     modifier = Modifier
                                         .matchParentSize()
@@ -169,13 +175,12 @@ fun RecipesScreen(
 
                             Spacer(modifier = Modifier.height(12.dp))
 
-                            // FILTRO "SIN ALCOHOL"
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.Center
                             ) {
                                 FilterToggleButton(
-                                    text = "🚫 Sin alcohol", // Added emoji for consistency
+                                    text = "🚫 Sin alcohol",
                                     selected = soloSinAlcohol,
                                     onClick = { soloSinAlcohol = !soloSinAlcohol }
                                 )
@@ -215,7 +220,7 @@ fun RecipesScreen(
                             color = MaterialTheme.colorScheme.error
                         )
                         Button(
-                            onClick = { viewModel.cargarTragos() },
+                            onClick = { /* Podrías implementar recarga si quieres */ },
                             contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp)
                         ) {
                             Icon(Icons.Default.Refresh, contentDescription = "Reintentar")
@@ -226,12 +231,9 @@ fun RecipesScreen(
                 }
             }
 
-            // Custom Dialog
             if (tragoDetalleState is TragoDetalleUiState.Success) {
                 val trago = (tragoDetalleState as TragoDetalleUiState.Success).trago
-                Dialog(
-                    onDismissRequest = { viewModel.limpiarTragoDetalle() }
-                ) {
+                Dialog(onDismissRequest = { viewModel.limpiarTragoDetalle() }) {
                     Surface(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -264,6 +266,7 @@ fun RecipesScreen(
         }
     }
 }
+
 
 @Composable
 fun FilterToggleButton(
