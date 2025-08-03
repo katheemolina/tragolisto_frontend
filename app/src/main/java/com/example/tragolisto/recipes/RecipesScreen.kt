@@ -35,6 +35,7 @@ import com.example.tragolisto.ui.viewmodel.TragosViewModel
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.ui.platform.LocalContext
+import com.example.tragolisto.data.global.usuarioglobal
 import com.example.tragolisto.data.utils.cargarRecetasOffline
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -300,6 +301,7 @@ fun TragoCard(
     onFavoritoClick: () -> Unit,
     onClick: () -> Unit
 ) {
+    val esModoOffline = usuarioglobal?.idToken == "offline"
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -316,20 +318,21 @@ fun TragoCard(
                 .padding(20.dp)
         ) {
             // Botón de estrella en la esquina superior derecha
-            IconButton(
-                onClick = onFavoritoClick,
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .size(32.dp)
-            ) {
-                Icon(
-                    imageVector = if (esFavorito) Icons.Filled.Star else Icons.Outlined.Star,
-                    contentDescription = if (esFavorito) "Quitar de favoritos" else "Agregar a favoritos",
-                    tint = if (esFavorito) Color(0xFFFFD700) else MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(24.dp)
-                )
+            if (!esModoOffline) {
+                IconButton(
+                    onClick = onFavoritoClick,
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .size(32.dp)
+                ) {
+                    Icon(
+                        imageVector = if (esFavorito) Icons.Filled.Star else Icons.Outlined.Star,
+                        contentDescription = if (esFavorito) "Quitar de favoritos" else "Agregar a favoritos",
+                        tint = if (esFavorito) Color(0xFFFFD700) else MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
             }
-
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
