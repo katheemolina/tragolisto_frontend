@@ -1,6 +1,8 @@
 package com.example.tragolisto.auth
 
+import android.content.Context
 import android.content.Intent
+import android.net.ConnectivityManager
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -160,7 +162,6 @@ class LoginScreen : ComponentActivity() {
         }
     }
 
-
     private fun handleSignIn(credential: androidx.credentials.Credential) {
         if (credential is androidx.credentials.CustomCredential &&
             credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL
@@ -265,6 +266,17 @@ fun LoginScreenContent(
     onGoogleSignIn: () -> Unit
 ) {
     val context = LocalContext.current
+    val noInternet = remember { mutableStateOf(false) }
+
+    fun isInternetAvailable(context: Context): Boolean {
+        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        return connectivityManager.activeNetworkInfo?.isConnected == true
+    }
+
+    DisposableEffect(context) {
+        noInternet.value = !isInternetAvailable(context)
+        onDispose { }
+    }
 
     Column(
         modifier = Modifier
@@ -274,25 +286,32 @@ fun LoginScreenContent(
         verticalArrangement = Arrangement.Center
     ) {
 
-        // ✅ Logo o imagen superior
         Image(
             painter = painterResource(id = R.drawable.test),
             contentDescription = "Logo TragoListo",
             modifier = Modifier
                 .fillMaxWidth()
-                .height(250.dp) // alto fijo
+                .height(250.dp)
                 .padding(bottom = 24.dp)
         )
 
-
-        // ✅ Texto con nueva tipografía y peso
-        //Text(
-        //  text = "Bienvenido a TragoListo",
-        //  fontSize = 28.sp,
-        //  fontWeight = FontWeight.Bold,
-        //  textAlign = TextAlign.Center,
-        //  modifier = Modifier.padding(bottom = 16.dp)
-        //)
+        // 🟥 AVISO si no hay conexión
+        if (noInternet.value) {
+            Surface(
+                color = Color(0xFFB00020).copy(alpha = 0.1f),
+                shape = RoundedCornerShape(8.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp)
+            ) {
+                Text(
+                    text = "No tenés conexión a Internet 😕",
+                    color = Color(0xFFB00020),
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(12.dp)
+                )
+            }
+        }
 
         if (errorMessage != null) {
             Text(
@@ -304,10 +323,9 @@ fun LoginScreenContent(
             )
         }
 
-        // ✅ Botón personalizado con ícono de Google
         Button(
             onClick = onGoogleSignIn,
-            enabled = !isLoading,
+            enabled = !isLoading && !noInternet.value, // Aquí está la clave: bloquear si no hay internet
             shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color.White,
@@ -340,11 +358,10 @@ fun LoginScreenContent(
             }
         }
 
-        // ✅ Botón de acceso offline
-        Spacer(modifier = Modifier.height(16.dp)) // Separación del botón anterior
+        Spacer(modifier = Modifier.height(16.dp))
+
         Button(
             onClick = {
-                // Login offline simulado
                 usuarioglobal = UserGlobal(
                     uid = "offline_user",
                     email = "offline@user.com",
@@ -373,6 +390,7 @@ fun LoginScreenContent(
         }
     }
 }
+
 
 
 @Preview(showBackground = true)
