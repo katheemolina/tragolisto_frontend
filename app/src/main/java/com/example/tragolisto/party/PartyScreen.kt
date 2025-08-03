@@ -36,6 +36,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.example.tragolisto.data.local.AppDatabase
 import com.example.tragolisto.data.global.usuarioglobal
+import com.example.tragolisto.data.utils.cargarJuegosOffline
+import com.example.tragolisto.data.utils.cargarRecetasOffline
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -46,6 +48,15 @@ fun PartyScreen(
         factory = JuegosFiestaViewModelFactory()
     )
     val uiState by viewModel.uiState.collectAsState()
+
+    val context = LocalContext.current
+
+    // Cargar tragos offline desde JSON y pasarlos al ViewModel
+    LaunchedEffect(Unit) {
+        val JuegosOffline = cargarJuegosOffline(context)
+        viewModel.setJuegos(JuegosOffline)  // función que deberás agregar en tu ViewModel para setear tragos
+    }
+
     val juegoDetalleState by viewModel.juegoDetalleState.collectAsState()
 
     var categoriaSeleccionada by rememberSaveable { mutableStateOf("Todas") }

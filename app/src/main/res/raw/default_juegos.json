@@ -1,0 +1,19 @@
+{
+  "Juegos": [
+    {
+      "id" : 1,
+      "nombre": "test",
+      "descripcion" : "test",
+      "categoria":  "test",
+      "materiales": "test",
+      "minJugadores": 1,
+      "maxJugadores": 2,
+      "esParaBeber": true,
+      "video": "",
+      "createdAt":
+      "1970-01-01T00:00:00Z", // Valor por defecto
+      "updatedAt":
+      "1970-01-01T00:00:00Z"  // Valor por defecto
+    }
+  ]
+}

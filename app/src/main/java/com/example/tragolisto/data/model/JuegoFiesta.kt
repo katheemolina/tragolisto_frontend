@@ -38,4 +38,10 @@ data class JuegoFiesta(
             null
         }
     }
+
 }
+
+data class JuegosResponse(
+    val total: Int,
+    val juegos: List<JuegoFiesta>
+)
