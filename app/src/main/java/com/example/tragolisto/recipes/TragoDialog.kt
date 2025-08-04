@@ -9,11 +9,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import com.example.tragolisto.R
 import com.example.tragolisto.data.model.Trago
-
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun TragoDialog(
@@ -46,7 +47,10 @@ fun TragoDialog(
                         modifier = Modifier.weight(1f)
                     )
                     IconButton(onClick = onDismiss) {
-                        Icon(Icons.Default.Close, contentDescription = "Cerrar")
+                        Icon(
+                            Icons.Default.Close,
+                            contentDescription = stringResource(R.string.close)
+                        )
                     }
                 }
 
@@ -63,9 +67,9 @@ fun TragoDialog(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    InfoChip("Dificultad", trago.dificultad)
-                    InfoChip("Tiempo", "${trago.tiempoPreparacionMinutos} min")
-                    InfoChip("Alcohol", if (trago.esAlcoholico) "Sí" else "No")
+                    InfoChip(stringResource(R.string.difficulty), trago.dificultad)
+                    InfoChip(stringResource(R.string.time), stringResource(R.string.minutes_format, trago.tiempoPreparacionMinutos))
+                    InfoChip(stringResource(R.string.alcohol), stringResource(if (trago.esAlcoholico) R.string.yes else R.string.no))
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -73,12 +77,17 @@ fun TragoDialog(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // Ingredientes
-                SectionTitle("Ingredientes")
+                SectionTitle(stringResource(R.string.ingredients))
                 Spacer(modifier = Modifier.height(8.dp))
                 Column {
                     trago.ingredientes?.forEach { ingrediente ->
                         Text(
-                            text = "• ${ingrediente.nombre}: ${ingrediente.pivot.cantidad} ${ingrediente.pivot.unidad}",
+                            text = stringResource(
+                                R.string.ingredient_line_format,
+                                ingrediente.nombre,
+                                ingrediente.pivot.cantidad,
+                                ingrediente.pivot.unidad
+                            ),
                             style = MaterialTheme.typography.bodyMedium,
                             modifier = Modifier.padding(bottom = 4.dp)
                         )
@@ -86,7 +95,7 @@ fun TragoDialog(
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
-                SectionTitle("Preparación")
+                SectionTitle(stringResource(R.string.instructions))
                 Spacer(modifier = Modifier.height(8.dp))
 
                 trago.instrucciones
@@ -100,10 +109,9 @@ fun TragoDialog(
                         )
                     }
 
-                // Tips
                 if (trago.tips.isNotBlank()) {
                     Spacer(modifier = Modifier.height(24.dp))
-                    SectionTitle("Tips")
+                    SectionTitle(stringResource(R.string.tips))
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = trago.tips,
@@ -111,10 +119,9 @@ fun TragoDialog(
                     )
                 }
 
-                // Historia
                 if (trago.historia.isNotBlank()) {
                     Spacer(modifier = Modifier.height(24.dp))
-                    SectionTitle("Historia")
+                    SectionTitle(stringResource(R.string.history))
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = trago.historia,

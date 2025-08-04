@@ -9,8 +9,7 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.result.contract.ActivityResultContracts
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -32,10 +31,7 @@ import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialException
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
-import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential.Companion.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL
 
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions
-import com.google.android.gms.common.api.ApiException
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
@@ -47,10 +43,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
-
 
 class LoginScreen : ComponentActivity() {
 
@@ -87,7 +82,7 @@ class LoginScreen : ComponentActivity() {
     private fun launchGoogleSignIn() {
         val googleIdOption = GetGoogleIdOption.Builder()
             .setServerClientId(getString(R.string.default_web_client_id))
-            .setFilterByAuthorizedAccounts(false) // false = permite elegir cuentas nuevas también
+            .setFilterByAuthorizedAccounts(false)
             .build()
 
         val request = GetCredentialRequest.Builder()
@@ -105,7 +100,6 @@ class LoginScreen : ComponentActivity() {
                 } catch (e: GetCredentialException) {
                     Log.e("LoginScreen", "Error al obtener credenciales: ${e.message}")
 
-                    // Mostrar error y detener loading
                     runOnUiThread {
                         setContent {
                             TragoListoTheme {
@@ -114,11 +108,11 @@ class LoginScreen : ComponentActivity() {
                                         isLoading = false,
                                         errorMessage = when (e.type) {
                                             "androidx.credentials.TYPE_NO_CREDENTIAL" ->
-                                                "No se encontró ninguna cuenta de Google en el dispositivo."
+                                                stringResource(R.string.login_error_no_account)
                                             "androidx.credentials.TYPE_USER_CANCELED" ->
-                                                "Inicio de sesión cancelado por el usuario."
+                                                stringResource(R.string.login_error_canceled)
                                             else ->
-                                                "Error al iniciar sesión: ${e.message}"
+                                                "${stringResource(R.string.login_error_default)}: ${e.message}"
                                         },
                                         onGoogleSignIn = { launchGoogleSignIn() }
                                     )
@@ -135,7 +129,7 @@ class LoginScreen : ComponentActivity() {
                                 Surface(modifier = Modifier.fillMaxSize()) {
                                     LoginScreenContent(
                                         isLoading = false,
-                                        errorMessage = "Error inesperado: ${e.message}",
+                                        errorMessage = "${stringResource(R.string.login_error_unexpected)}: ${e.message}",
                                         onGoogleSignIn = { launchGoogleSignIn() }
                                     )
                                 }
@@ -144,14 +138,13 @@ class LoginScreen : ComponentActivity() {
                     }
                 }
             } else {
-                // Opcional: manejar dispositivos que no cumplen con la API mínima
                 runOnUiThread {
                     setContent {
                         TragoListoTheme {
                             Surface(modifier = Modifier.fillMaxSize()) {
                                 LoginScreenContent(
                                     isLoading = false,
-                                    errorMessage = "Tu versión de Android no es compatible con el inicio de sesión con Google.",
+                                    errorMessage = stringResource(R.string.unsupported_android_version),
                                     onGoogleSignIn = { launchGoogleSignIn() }
                                 )
                             }
@@ -172,11 +165,9 @@ class LoginScreen : ComponentActivity() {
                 firebaseAuthWithGoogle(idToken)
             } else {
                 Log.w("LoginScreen", "ID token vacío o nulo")
-
             }
         } else {
             Log.w("LoginScreen", "Tipo de credencial inesperado: ${credential.javaClass.simpleName}")
-
         }
     }
 
@@ -191,7 +182,6 @@ class LoginScreen : ComponentActivity() {
                     val nombre = user?.displayName
                     Log.d("LoginScreen", "Sign-in success: ${user?.email}, UID: $uid")
 
-                    // Almacenar datos del usuario globalmente (si `usuarioglobal` es accesible)
                     usuarioglobal = UserGlobal(
                         uid = uid,
                         email = email,
@@ -199,55 +189,41 @@ class LoginScreen : ComponentActivity() {
                         idToken = idToken,
                         esMayor = false
                     )
-                    // Enviar los datos iniciales de Google al backend
+
                     ClientApi.sendGoogleLoginData(idToken, uid, email, nombre ?: "") { success, responseData ->
                         if (success) {
-                            Log.d("LoginScreen", "Datos iniciales de usuario enviados al backend con éxito. Finalizando LoginScreen.")
-                            // --- LA CORRECCIÓN CLAVE AQUÍ ---
-                            // Inicia MainActivity y luego cierra esta actividad de LoginScreen.
+                            Log.d("LoginScreen", "Datos iniciales enviados. Finalizando LoginScreen.")
                             val intent = Intent(this@LoginScreen, MainActivity::class.java)
-                            // Estas flags aseguran que MainActivity sea la única actividad en la pila
                             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
                             startActivity(intent)
-                            finish() // Ahora sí, cierra LoginScreen después de lanzar MainActivity
+                            finish()
                         } else {
-                            // Si falla el envío al backend, actualiza la UI de LoginScreen para mostrar el error.
-                            // Esto DEBE hacerse en el hilo principal.
                             runOnUiThread {
-                                setContent { // Re-establecer el contenido con el mensaje de error
+                                setContent {
                                     TragoListoTheme {
                                         Surface(modifier = Modifier.fillMaxSize()) {
-                                            val isLoadingState by remember { mutableStateOf(false) }
-                                            val errorMessageState by remember { mutableStateOf<String?>(
-                                                "Error al enviar datos al backend: $responseData"
-                                            ) }
                                             LoginScreenContent(
-                                                isLoading = isLoadingState,
-                                                errorMessage = errorMessageState,
+                                                isLoading = false,
+                                                errorMessage = "${stringResource(R.string.error_sending_user_data)}: $responseData",
                                                 onGoogleSignIn = { launchGoogleSignIn() }
                                             )
                                         }
                                     }
                                 }
-                                Log.e("LoginScreen", "Error al enviar datos de usuario al backend: $responseData")
+                                Log.e("LoginScreen", "Error al enviar datos: $responseData")
                             }
                         }
                     }
 
                 } else {
-                    // Manejar fallo de autenticación de Firebase
                     Log.w("LoginScreen", "Sign-in failed", task.exception)
                     runOnUiThread {
-                        setContent { // Re-establecer el contenido con el mensaje de error de Firebase
+                        setContent {
                             TragoListoTheme {
                                 Surface(modifier = Modifier.fillMaxSize()) {
-                                    val isLoadingState by remember { mutableStateOf(false) }
-                                    val errorMessageState by remember { mutableStateOf<String?>(
-                                        "Error de autenticación: ${task.exception?.localizedMessage ?: "Error desconocido"}"
-                                    ) }
                                     LoginScreenContent(
-                                        isLoading = isLoadingState,
-                                        errorMessage = errorMessageState,
+                                        isLoading = false,
+                                        errorMessage = "${stringResource(R.string.auth_error_firebase)}: ${task.exception?.localizedMessage ?: stringResource(R.string.login_error_default)}",
                                         onGoogleSignIn = { launchGoogleSignIn() }
                                     )
                                 }
@@ -288,14 +264,13 @@ fun LoginScreenContent(
 
         Image(
             painter = painterResource(id = R.drawable.test),
-            contentDescription = "Logo TragoListo",
+            contentDescription = stringResource(R.string.app_logo_description),
             modifier = Modifier
                 .fillMaxWidth()
                 .height(250.dp)
                 .padding(bottom = 24.dp)
         )
 
-        // 🟥 AVISO si no hay conexión
         if (noInternet.value) {
             Surface(
                 color = Color(0xFFB00020).copy(alpha = 0.1f),
@@ -305,7 +280,7 @@ fun LoginScreenContent(
                     .padding(bottom = 16.dp)
             ) {
                 Text(
-                    text = "No tenés conexión a Internet 😕",
+                    text = stringResource(R.string.internet_unavailable),
                     color = Color(0xFFB00020),
                     textAlign = TextAlign.Center,
                     modifier = Modifier.padding(12.dp)
@@ -325,7 +300,7 @@ fun LoginScreenContent(
 
         Button(
             onClick = onGoogleSignIn,
-            enabled = !isLoading && !noInternet.value, // Aquí está la clave: bloquear si no hay internet
+            enabled = !isLoading && !noInternet.value,
             shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color.White,
@@ -344,13 +319,13 @@ fun LoginScreenContent(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Image(
                         painter = painterResource(id = R.drawable.ic_google_logo),
-                        contentDescription = "Google Icon",
+                        contentDescription = null,
                         modifier = Modifier
                             .size(24.dp)
                             .padding(end = 8.dp)
                     )
                     Text(
-                        text = "Iniciar sesión con Google",
+                        text = stringResource(R.string.sign_in_with_google),
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Medium
                     )
@@ -383,15 +358,13 @@ fun LoginScreenContent(
                 .height(56.dp)
         ) {
             Text(
-                text = "Ingresar sin conexión",
+                text = stringResource(R.string.enter_offline),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Medium
             )
         }
     }
 }
-
-
 
 @Preview(showBackground = true)
 @Composable

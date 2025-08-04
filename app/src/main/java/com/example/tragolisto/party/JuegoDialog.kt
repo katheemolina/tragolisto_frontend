@@ -27,6 +27,8 @@ import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.YouTubePlayer
 import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.listeners.AbstractYouTubePlayerListener
 import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.views.YouTubePlayerView
 import kotlin.text.toRegex
+import androidx.compose.ui.res.stringResource
+import com.example.tragolisto.R
 
 fun extractYouTubeVideoIdAndCleanDescription(description: String): Pair<String?, String> {
     val youtubeRegex =
@@ -58,7 +60,6 @@ fun JuegoDialog(
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
-    // Extraer ID del video
     val videoIdFromVideoField = extractVideoIdFromUrl(juego.video)
     val (videoIdFromDescription, cleanedDescription) = remember(juego.descripcion) {
         extractYouTubeVideoIdAndCleanDescription(juego.descripcion)
@@ -80,7 +81,7 @@ fun JuegoDialog(
                     .padding(20.dp)
                     .verticalScroll(rememberScrollState())
             ) {
-                // Título
+                // Título + botón cerrar
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
@@ -91,13 +92,16 @@ fun JuegoDialog(
                         modifier = Modifier.weight(1f)
                     )
                     IconButton(onClick = onDismiss) {
-                        Icon(Icons.Default.Close, contentDescription = "Cerrar")
+                        Icon(
+                            Icons.Default.Close,
+                            contentDescription = stringResource(id = R.string.cd_close)
+                        )
                     }
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // YouTube player embebido
+                // YouTube player embebido si hay video
                 videoId?.let { id ->
                     AndroidView(
                         factory = { context ->
@@ -114,7 +118,6 @@ fun JuegoDialog(
                             .fillMaxWidth()
                             .aspectRatio(16f / 9f)
                     )
-
                     Spacer(modifier = Modifier.height(16.dp))
                 }
 
@@ -132,12 +135,12 @@ fun JuegoDialog(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    InfoChip(label = "Categoría", value = juego.categoria)
+                    InfoChip(label = stringResource(id = R.string.label_category), value = juego.categoria)
                     InfoChip(
-                        label = "Jugadores",
+                        label = stringResource(id = R.string.label_players),
                         value = "${juego.minJugadores}${juego.maxJugadores?.let { " - $it" } ?: "+"} "
                     )
-                    InfoChip(label = "Bebidas", value = if (juego.esParaBeber) "Sí" else "No")
+                    InfoChip(label = stringResource(id = R.string.label_drinks), value = if (juego.esParaBeber) stringResource(id = R.string.yes) else stringResource(id = R.string.no))
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -145,7 +148,7 @@ fun JuegoDialog(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // Materiales
-                SectionTitle("Materiales")
+                SectionTitle(text = stringResource(id = R.string.label_materials))
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = juego.materiales,
@@ -167,7 +170,7 @@ fun JuegoDialog(
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Text(
-                                text = "¡Juego con bebidas!",
+                                text = stringResource(id = R.string.alert_drinks_game_title),
                                 style = MaterialTheme.typography.titleMedium.copy(
                                     fontWeight = FontWeight.SemiBold,
                                     color = MaterialTheme.colorScheme.onTertiaryContainer
@@ -175,7 +178,7 @@ fun JuegoDialog(
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
-                                text = "Recuerda beber con responsabilidad y respetar los límites de cada persona.",
+                                text = stringResource(id = R.string.alert_drinks_game_message),
                                 style = MaterialTheme.typography.bodyMedium.copy(
                                     color = MaterialTheme.colorScheme.onTertiaryContainer
                                 )
@@ -190,14 +193,11 @@ fun JuegoDialog(
     }
 }
 
-// Chips reutilizables
 @Composable
 private fun InfoChip(label: String, value: String) {
     AssistChip(
         onClick = {},
-        label = {
-            Text("$label: $value")
-        },
+        label = { Text("$label: $value") },
         shape = MaterialTheme.shapes.medium
     )
 }

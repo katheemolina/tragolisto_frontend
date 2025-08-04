@@ -31,14 +31,15 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.background
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import kotlinx.coroutines.launch
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import com.example.tragolisto.R
 import com.example.tragolisto.data.local.AppDatabase
 import com.example.tragolisto.data.global.usuarioglobal
 import com.example.tragolisto.data.utils.cargarJuegosOffline
 import com.example.tragolisto.data.utils.cargarRecetasOffline
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PartyScreen(
@@ -50,8 +51,6 @@ fun PartyScreen(
     )
     val uiState by viewModel.uiState.collectAsState()
 
-
-    // Cargar tragos offline desde JSON y pasarlos al ViewModel
     LaunchedEffect(Unit) {
         if (uiState is JuegosFiestaUiState.Loading) {
             val juegosOffline = cargarJuegosOffline(context)
@@ -66,18 +65,18 @@ fun PartyScreen(
     var busqueda by rememberSaveable(stateSaver = TextFieldValue.Saver) { mutableStateOf(TextFieldValue("")) }
 
     val categoriasConEmojis = mapOf(
-        "Todas" to "📚 Todas",
-        "Al azar" to "🎲 Al azar",
-        "Con elementos" to "🎯 Con elementos",
-        "Creativo" to "🎨 Creativo",
-        "De adivinanzas" to "🧠 De adivinanzas",
-        "De cata" to "🍷 De cata",
-        "De comunicación" to "🗣️ De comunicación",
-        "De desafío" to "⚔️ De desafío",
-        "De preguntas" to "❓ De preguntas",
-        "De reglas" to "📜 De reglas",
-        "Físico" to "🏃‍♂️ Físico",
-        "Musical" to "🎵 Musical"
+        "Todas" to stringResource(R.string.all_categories),
+        "Al azar" to stringResource(R.string.random_category),
+        "Con elementos" to stringResource(R.string.with_items_category),
+        "Creativo" to stringResource(R.string.creative_category),
+        "De adivinanzas" to stringResource(R.string.riddle_category),
+        "De cata" to stringResource(R.string.tasting_category),
+        "De comunicación" to stringResource(R.string.communication_category),
+        "De desafío" to stringResource(R.string.challenge_category),
+        "De preguntas" to stringResource(R.string.question_category),
+        "De reglas" to stringResource(R.string.rules_category),
+        "Físico" to stringResource(R.string.physical_category),
+        "Musical" to stringResource(R.string.musical_category)
     )
 
     Scaffold(
@@ -85,7 +84,7 @@ fun PartyScreen(
             CenterAlignedTopAppBar(
                 title = {
                     Text(
-                        text = "Modo Fiesta",
+                        text = stringResource(R.string.party_mode),
                         style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
                         textAlign = TextAlign.Center
                     )
@@ -94,13 +93,11 @@ fun PartyScreen(
                     IconButton(onClick = onBackClick) {
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "Volver"
+                            contentDescription = stringResource(R.string.back)
                         )
                     }
                 },
-                actions = {
-
-                }
+                actions = {}
             )
         }
     ) { paddingValues ->
@@ -126,21 +123,19 @@ fun PartyScreen(
                                 (busqueda.text.isBlank() || it.nombre.contains(busqueda.text, ignoreCase = true))
                     }
 
-
                     Column(modifier = Modifier.fillMaxSize()) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             OutlinedTextField(
                                 value = busqueda,
                                 onValueChange = { busqueda = it },
                                 modifier = Modifier.fillMaxWidth(),
-                                placeholder = { Text("Buscar juego...") },
+                                placeholder = { Text(stringResource(R.string.search_game)) },
                                 singleLine = true,
                                 shape = RoundedCornerShape(12.dp)
                             )
 
                             Spacer(modifier = Modifier.height(12.dp))
 
-                            // FILTROS DE CATEGORÍA EN SCROLL HORIZONTAL
                             Box(modifier = Modifier.fillMaxWidth()) {
                                 val scrollState = rememberScrollState()
                                 Row(
@@ -158,7 +153,6 @@ fun PartyScreen(
                                     }
                                 }
 
-                                // FADE LATERAL DERECHO
                                 Box(
                                     modifier = Modifier
                                         .matchParentSize()
@@ -174,14 +168,13 @@ fun PartyScreen(
 
                             Spacer(modifier = Modifier.height(12.dp))
 
-                            // FILTRO "PARA BEBER"
                             if (usuarioglobal?.esMayor != false) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.Center
                                 ) {
                                     FilterToggleButton(
-                                        text = "🍻 Para beber",
+                                        text = stringResource(R.string.drinking_games),
                                         selected = soloParaBeber,
                                         onClick = { soloParaBeber = !soloParaBeber }
                                     )
@@ -223,15 +216,14 @@ fun PartyScreen(
                             onClick = { viewModel.cargarJuegos() },
                             contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp)
                         ) {
-                            Icon(Icons.Default.Refresh, contentDescription = "Reintentar")
+                            Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.retry))
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("Reintentar")
+                            Text(stringResource(R.string.retry))
                         }
                     }
                 }
             }
 
-            // Diálogo
             if (juegoDetalleState is JuegoDetalleUiState.Success) {
                 val juego = (juegoDetalleState as JuegoDetalleUiState.Success).juego
                 Dialog(onDismissRequest = { viewModel.limpiarJuegoDetalle() }) {
@@ -255,11 +247,11 @@ fun PartyScreen(
             if (juegoDetalleState is JuegoDetalleUiState.Error) {
                 AlertDialog(
                     onDismissRequest = { viewModel.limpiarJuegoDetalle() },
-                    title = { Text("Error") },
+                    title = { Text(stringResource(R.string.error)) },
                     text = { Text((juegoDetalleState as JuegoDetalleUiState.Error).message) },
                     confirmButton = {
                         TextButton(onClick = { viewModel.limpiarJuegoDetalle() }) {
-                            Text("OK")
+                            Text(stringResource(R.string.ok))
                         }
                     }
                 )
@@ -309,13 +301,13 @@ fun JuegoCard(juego: JuegoFiesta, onClick: () -> Unit, emojiCategoria: String) {
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "Categoría: $emojiCategoria",
+                text = stringResource(R.string.category_prefix, emojiCategoria),
                 style = MaterialTheme.typography.bodyMedium
             )
             if (juego.esParaBeber) {
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "🍻 Para beber",
+                    text = stringResource(R.string.drinking_game_label),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.primary
                 )

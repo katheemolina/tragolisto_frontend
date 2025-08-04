@@ -23,6 +23,8 @@ import com.example.tragolisto.ui.theme.*
 import com.example.tragolisto.data.global.usuarioglobal
 import com.example.tragolisto.data.api.ClientApi
 import android.util.Log
+import androidx.compose.ui.res.stringResource
+import com.example.tragolisto.R
 import com.google.firebase.auth.FirebaseAuth // Import FirebaseAuth
 import java.time.Period
 
@@ -31,7 +33,6 @@ data class OnboardingPage(
     val description: String,
     val emoji: String? = null
 )
-
 @Composable
 fun DotIndicator(
     totalDots: Int,
@@ -73,39 +74,39 @@ fun OnboardingScreen(
             ?: System.currentTimeMillis()
     )
     var isSavingBirthDate by remember { mutableStateOf(false) }
-    var errorMessage: String? by remember { mutableStateOf(null) } // To display error messages to the user
+    var errorMessage: String? by remember { mutableStateOf(null) }
 
-    val auth = FirebaseAuth.getInstance() // Get FirebaseAuth instance
+    val auth = FirebaseAuth.getInstance()
 
     val pages = listOf(
         OnboardingPage(
-            title = "Hola soy Ferni",
-            description = "Tu bartender virtual que te ayudara a preparar deliciosos tragos con lo que tenes en casa.",
+            title = stringResource(id = R.string.onboarding_title_ferni),
+            description = stringResource(id = R.string.onboarding_desc_ferni),
             emoji = "🍸"
         ),
         OnboardingPage(
-            title = "Chatea con Ferni",
-            description = "Contame que ingredientes tenes disponibles y tus preferencias. Te recomendare los mejores tragos que podes preparar sin salir a comprar nada extra",
+            title = stringResource(id = R.string.onboarding_title_chat),
+            description = stringResource(id = R.string.onboarding_desc_chat),
             emoji = "💬"
         ),
         OnboardingPage(
-            title = "Guarda tus favoritos",
-            description = "Marca tus recetas preferidas para acceder rapidamente a ellas cuando quieras",
+            title = stringResource(id = R.string.onboarding_title_favorites),
+            description = stringResource(id = R.string.onboarding_desc_favorites),
             emoji = "⭐"
         ),
         OnboardingPage(
-            title = "Modo fiesta",
-            description = "¿Reunion con amigos? Juegos para que las reuniones sean mas divertidas",
+            title = stringResource(id = R.string.onboarding_title_party),
+            description = stringResource(id = R.string.onboarding_desc_party),
             emoji = "🎉"
         ),
         OnboardingPage(
-            title = "Explora recetas",
-            description = "Descubri nuestra coleccion de recetas clasicas y creativas, con y sin alcohol",
+            title = stringResource(id = R.string.onboarding_title_recipes),
+            description = stringResource(id = R.string.onboarding_desc_recipes),
             emoji = "📖"
         ),
         OnboardingPage(
-            title = "Aprende mientras disfrutas",
-            description = "Cada receta incluye instrucciones paso a paso, tips y datos curiosos sobre la historia y origen de cada trago",
+            title = stringResource(id = R.string.onboarding_title_learn),
+            description = stringResource(id = R.string.onboarding_desc_learn),
             emoji = "ℹ️"
         )
     )
@@ -123,7 +124,6 @@ fun OnboardingScreen(
             verticalArrangement = Arrangement.Center
         ) {
             if (currentPage < pages.size) {
-                // Regular onboarding pages
                 val page = pages[currentPage]
 
                 page.emoji?.let { emoji ->
@@ -153,7 +153,6 @@ fun OnboardingScreen(
                     modifier = Modifier.padding(bottom = 48.dp)
                 )
 
-                // Navigation arrows
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -169,7 +168,7 @@ fun OnboardingScreen(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.KeyboardArrowLeft,
-                                contentDescription = "Anterior",
+                                contentDescription = stringResource(id = R.string.cd_previous),
                                 tint = MaterialTheme.colorScheme.onPrimaryContainer
                             )
                         }
@@ -177,7 +176,6 @@ fun OnboardingScreen(
                         Spacer(modifier = Modifier.size(48.dp))
                     }
 
-                    // Next / Let's Start Button
                     if (currentPage < pages.size - 1) {
                         IconButton(
                             onClick = { currentPage++ },
@@ -188,18 +186,17 @@ fun OnboardingScreen(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.KeyboardArrowRight,
-                                contentDescription = "Siguiente",
+                                contentDescription = stringResource(id = R.string.cd_next),
                                 tint = MaterialTheme.colorScheme.onPrimary
                             )
                         }
                     } else {
-                        // Last intro page, button to move to the date of birth collection page
                         Button(
                             onClick = {
                                 if (esModoInvitado) {
                                     onFinish()
                                 } else {
-                                    currentPage++ // Avanza a la pantalla de la fecha
+                                    currentPage++
                                 }
                             },
                             modifier = Modifier
@@ -210,7 +207,7 @@ fun OnboardingScreen(
                             )
                         ) {
                             Text(
-                                "¿Comenzamos?",
+                                stringResource(id = R.string.onboarding_lets_start),
                                 style = MaterialTheme.typography.titleMedium,
                                 color = MaterialTheme.colorScheme.onSecondary
                             )
@@ -218,16 +215,14 @@ fun OnboardingScreen(
                     }
                 }
 
-                // Dot indicators
                 DotIndicator(
                     totalDots = pages.size,
                     selectedPage = currentPage,
                     modifier = Modifier.padding(top = 48.dp)
                 )
             } else {
-                // User info collection page (after all intro pages)
                 Text(
-                    text = "Hola " + (usuarioglobal?.nombre ?: "default"),
+                    text = stringResource(id = R.string.onboarding_hello, usuarioglobal?.nombre ?: "default"),
                     style = MaterialTheme.typography.headlineLarge.copy(
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary
@@ -236,14 +231,13 @@ fun OnboardingScreen(
                 )
 
                 Text(
-                    text = "Antes de comenzar, necesitamos tu fecha de nacimiento",
+                    text = stringResource(id = R.string.onboarding_birthdate_prompt),
                     style = MaterialTheme.typography.bodyLarge.copy(
                         color = MaterialTheme.colorScheme.onBackground
                     ),
                     modifier = Modifier.padding(bottom = 48.dp)
                 )
 
-                // Date picker button
                 OutlinedButton(
                     onClick = { showDatePicker = true },
                     modifier = Modifier
@@ -260,12 +254,11 @@ fun OnboardingScreen(
                 ) {
                     Text(
                         text = birthDate?.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
-                            ?: "Seleccionar fecha de nacimiento",
+                            ?: stringResource(id = R.string.onboarding_select_birthdate),
                         style = MaterialTheme.typography.titleMedium
                     )
                 }
 
-                // Button to finalize onboarding
                 Spacer(modifier = Modifier.height(24.dp))
                 Button(
                     onClick = {
@@ -275,7 +268,6 @@ fun OnboardingScreen(
                             isSavingBirthDate = true
                             errorMessage = null
 
-                            // Calcular edad y guardar si es mayor
                             val edad = Period.between(birthDate, LocalDate.now()).years
                             usuarioglobal?.esMayor = edad >= 18
 
@@ -283,43 +275,35 @@ fun OnboardingScreen(
                                 if (task.isSuccessful) {
                                     val idToken = usuarioglobal?.idToken
                                     if (idToken != null) {
-                                        Log.d("OnboardingScreen", "ID Token a enviar: ${idToken.take(20)}... (truncado)")
-                                        Log.d("OnboardingScreen", "Fecha de nacimiento a enviar: ${birthDate!!.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))}")
-
                                         ClientApi.completarOnboarding(idToken, birthDate!!) { success, message ->
                                             isSavingBirthDate = false
                                             if (success) {
-                                                Log.d("OnboardingScreen", "Onboarding completed successfully: $message")
                                                 onFinish()
                                             } else {
-                                                Log.e("OnboardingScreen", "Error completing onboarding: $message")
                                                 errorMessage = "Error: $message"
                                             }
                                         }
                                     } else {
                                         isSavingBirthDate = false
-                                        errorMessage = "Error: Couldn't get user ID Token."
-                                        Log.e("OnboardingScreen", "ID Token is null.")
+                                        errorMessage = stringResource(id = R.string.error_no_token)
                                     }
                                 } else {
                                     isSavingBirthDate = false
-                                    errorMessage = "Error getting ID Token: ${task.exception?.localizedMessage}"
-                                    Log.e("OnboardingScreen", "Failed to get ID Token: ${task.exception}")
+                                    errorMessage = stringResource(id = R.string.error_token_failed, task.exception?.localizedMessage ?: "")
                                 }
                             }
                         }
                     },
-                    enabled = esModoInvitado || (birthDate != null && !isSavingBirthDate), // Enabled if date selected and not saving
+                    enabled = esModoInvitado || (birthDate != null && !isSavingBirthDate),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     if (isSavingBirthDate && !esModoInvitado) {
                         CircularProgressIndicator(modifier = Modifier.size(24.dp))
                     } else {
-                        Text("¡Listo, comencemos!")
+                        Text(stringResource(id = R.string.onboarding_finish_button))
                     }
                 }
 
-                // Display error message if any
                 if (errorMessage != null) {
                     Text(
                         text = errorMessage!!,
@@ -337,23 +321,20 @@ fun OnboardingScreen(
                                     datePickerState.selectedDateMillis?.let { millis ->
                                         birthDate = LocalDate.ofEpochDay(millis / (24 * 60 * 60 * 1000))
                                         showDatePicker = false
-                                        // NOTE: Do not call onFinish here, only when the "Let's start!" button is pressed
                                     }
                                 }
                             ) {
                                 Text(
-                                    "OK",
+                                    stringResource(id = R.string.onboarding_datepicker_ok),
                                     style = MaterialTheme.typography.labelLarge,
                                     color = MaterialTheme.colorScheme.primary
                                 )
                             }
                         },
                         dismissButton = {
-                            TextButton(
-                                onClick = { showDatePicker = false }
-                            ) {
+                            TextButton(onClick = { showDatePicker = false }) {
                                 Text(
-                                    "Cancelar",
+                                    stringResource(id = R.string.onboarding_datepicker_cancel),
                                     style = MaterialTheme.typography.labelLarge,
                                     color = MaterialTheme.colorScheme.secondary
                                 )
@@ -364,13 +345,13 @@ fun OnboardingScreen(
                             state = datePickerState,
                             title = {
                                 Text(
-                                    "Selecciona tu fecha de nacimiento",
+                                    stringResource(id = R.string.onboarding_datepicker_title),
                                     style = MaterialTheme.typography.titleLarge
                                 )
                             },
                             headline = {
                                 Text(
-                                    "Fecha de nacimiento",
+                                    stringResource(id = R.string.onboarding_datepicker_headline),
                                     style = MaterialTheme.typography.titleMedium
                                 )
                             },

@@ -35,6 +35,8 @@ import com.example.tragolisto.ui.viewmodel.TragosViewModel
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import com.example.tragolisto.R
 import com.example.tragolisto.data.global.usuarioglobal
 import com.example.tragolisto.data.utils.cargarRecetasOffline
 
@@ -46,10 +48,9 @@ fun RecipesScreen(
 ) {
     val context = LocalContext.current
 
-    // Cargar tragos offline desde JSON y pasarlos al ViewModel
     LaunchedEffect(Unit) {
         val recetasOffline = cargarRecetasOffline(context)
-        viewModel.setTragos(recetasOffline)  // función que deberás agregar en tu ViewModel para setear tragos
+        viewModel.setTragos(recetasOffline)
         viewModel.cargarFavoritos()
     }
 
@@ -63,10 +64,10 @@ fun RecipesScreen(
     var busqueda by rememberSaveable(stateSaver = TextFieldValue.Saver) { mutableStateOf(TextFieldValue("")) }
 
     val dificultadesConEmojis = mapOf(
-        "Todas" to "✨ Todas",
-        "Fácil" to "👶 Fácil",
-        "Media" to "🧑‍🔧 Media",
-        "Difícil" to "🤯 Difícil"
+        "Todas" to stringResource(R.string.all_difficulties),
+        "Fácil" to stringResource(R.string.easy_difficulty),
+        "Media" to stringResource(R.string.medium_difficulty),
+        "Difícil" to stringResource(R.string.hard_difficulty)
     )
 
     val snackbarHostState = remember { SnackbarHostState() }
@@ -96,7 +97,7 @@ fun RecipesScreen(
             CenterAlignedTopAppBar(
                 title = {
                     Text(
-                        text = "Recetas",
+                        text = stringResource(R.string.recipes_title),
                         style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
                         textAlign = TextAlign.Center
                     )
@@ -105,7 +106,7 @@ fun RecipesScreen(
                     IconButton(onClick = onBackClick) {
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "Volver"
+                            contentDescription = stringResource(R.string.back)
                         )
                     }
                 }
@@ -138,7 +139,7 @@ fun RecipesScreen(
                                 value = busqueda,
                                 onValueChange = { busqueda = it },
                                 modifier = Modifier.fillMaxWidth(),
-                                placeholder = { Text("Buscar trago...") },
+                                placeholder = { Text(stringResource(R.string.search_drink)) },
                                 singleLine = true,
                                 shape = RoundedCornerShape(12.dp)
                             )
@@ -181,7 +182,7 @@ fun RecipesScreen(
                                 horizontalArrangement = Arrangement.Center
                             ) {
                                 FilterToggleButton(
-                                    text = "🚫 Sin alcohol",
+                                    text = stringResource(R.string.non_alcoholic_filter),
                                     selected = soloSinAlcohol,
                                     onClick = { soloSinAlcohol = !soloSinAlcohol }
                                 )
@@ -221,12 +222,12 @@ fun RecipesScreen(
                             color = MaterialTheme.colorScheme.error
                         )
                         Button(
-                            onClick = { /* Podrías implementar recarga si quieres */ },
+                            onClick = { /* implementar recarga si se desea */ },
                             contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp)
                         ) {
-                            Icon(Icons.Default.Refresh, contentDescription = "Reintentar")
+                            Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.retry))
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("Reintentar")
+                            Text(stringResource(R.string.retry))
                         }
                     }
                 }
@@ -255,11 +256,11 @@ fun RecipesScreen(
             if (tragoDetalleState is TragoDetalleUiState.Error) {
                 AlertDialog(
                     onDismissRequest = { viewModel.limpiarTragoDetalle() },
-                    title = { Text("Error") },
+                    title = { Text(stringResource(R.string.error)) },
                     text = { Text((tragoDetalleState as TragoDetalleUiState.Error).message) },
                     confirmButton = {
                         TextButton(onClick = { viewModel.limpiarTragoDetalle() }) {
-                            Text("OK")
+                            Text(stringResource(R.string.ok))
                         }
                     }
                 )
@@ -293,7 +294,6 @@ fun FilterToggleButton(
         Text(text)
     }
 }
-
 @Composable
 fun TragoCard(
     trago: Trago,
@@ -317,7 +317,6 @@ fun TragoCard(
                 .fillMaxWidth()
                 .padding(20.dp)
         ) {
-            // Botón de estrella en la esquina superior derecha
             if (!esModoOffline) {
                 IconButton(
                     onClick = onFavoritoClick,
@@ -327,41 +326,39 @@ fun TragoCard(
                 ) {
                     Icon(
                         imageVector = if (esFavorito) Icons.Filled.Star else Icons.Outlined.Star,
-                        contentDescription = if (esFavorito) "Quitar de favoritos" else "Agregar a favoritos",
+                        contentDescription = if (esFavorito)
+                            stringResource(R.string.remove_from_favorites)
+                        else
+                            stringResource(R.string.add_to_favorites),
                         tint = if (esFavorito) Color(0xFFFFD700) else MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(24.dp)
                     )
                 }
             }
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(end = 40.dp) // Espacio para el botón de estrella
-            ) {
+
+            Column {
                 Text(
                     text = trago.nombre,
-                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                    color = MaterialTheme.colorScheme.onSurface
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
                 )
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = trago.descripcion,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    text = stringResource(R.string.difficulty_label, trago.dificultad),
+                    style = MaterialTheme.typography.bodyMedium
                 )
-                Spacer(modifier = Modifier.height(12.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    AssistChip(label = "Dificultad", value = trago.dificultad)
-                    AssistChip(label = "Tiempo", value = "${trago.tiempoPreparacionMinutos} min")
-                    AssistChip(label = "Alcohol", value = if (trago.esAlcoholico) "Sí" else "No")
+                if (!trago.esAlcoholico) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = stringResource(R.string.non_alcoholic_label),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
                 }
             }
         }
     }
 }
+
 
 @Composable
 fun AssistChip(label: String, value: String) {

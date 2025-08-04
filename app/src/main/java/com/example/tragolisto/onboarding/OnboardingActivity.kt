@@ -14,8 +14,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.tragolisto.R
 import com.example.tragolisto.ui.theme.TragoListoTheme // Asegúrate de que esta importación sea correcta para tu tema
 
 class OnboardingActivity : ComponentActivity() { // ASEGÚRATE DE QUE SE LLAMA OnboardingActivity
@@ -42,11 +44,11 @@ fun OnboardingScreenContent() {
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "¡Bienvenido! Completa tu perfil.",
+            text = stringResource(id = R.string.onboarding_welcome),
             style = MaterialTheme.typography.headlineMedium
         )
         Text(
-            text = "Esta es tu pantalla de onboarding.",
+            text = stringResource(id = R.string.onboarding_description),
             style = MaterialTheme.typography.bodyLarge,
             modifier = Modifier.padding(top = 8.dp)
         )

@@ -1,9 +1,12 @@
 package com.example.tragolisto.navigation
 
 import androidx.compose.runtime.*
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.tragolisto.R
 import com.example.tragolisto.chat.ChatScreen
 import com.example.tragolisto.chat.ChatSelectorScreen
 import com.example.tragolisto.creations.CreationsScreen
@@ -24,12 +27,13 @@ sealed class Screen(val route: String) {
     object Recipes : Screen("recipes")
     object Creations : Screen("creations")
 }
-
 @Composable
-fun AppNavigation(requiresOnboarding: Boolean) { // <-- ¡Añadimos este parámetro!
+fun AppNavigation(requiresOnboarding: Boolean) {
     val navController = rememberNavController()
+    val context = LocalContext.current
 
-    // Decidir la ruta de inicio basada en 'requiresOnboarding'
+    val defaultUserName = stringResource(id = R.string.default_user_name)
+
     val startRoute = if (requiresOnboarding) {
         Screen.Onboarding.route
     } else {
@@ -38,18 +42,14 @@ fun AppNavigation(requiresOnboarding: Boolean) { // <-- ¡Añadimos este paráme
 
     NavHost(
         navController = navController,
-        startDestination = startRoute // <-- La ruta inicial ahora es dinámica
+        startDestination = startRoute
     ) {
         composable(Screen.Onboarding.route) {
             OnboardingScreen(
                 esModoInvitado = usuarioglobal?.idToken == "offline",
                 onFinish = {
-                    // Después de que el onboarding en la UI se "complete",
-                    // navegamos a Home. Asumimos que si hay datos adicionales
-                    // como nombre o fecha de nacimiento, OnboardingScreen los
-                    // habrá enviado al backend.
                     navController.navigate(Screen.Home.route) {
-                        popUpTo(Screen.Onboarding.route) { inclusive = true } // Elimina Onboarding de la pila
+                        popUpTo(Screen.Onboarding.route) { inclusive = true }
                     }
                 }
             )
@@ -57,8 +57,8 @@ fun AppNavigation(requiresOnboarding: Boolean) { // <-- ¡Añadimos este paráme
 
         composable(Screen.Home.route) {
             HomeScreen(
-                userName = (usuarioglobal?.nombre ?: "Usuario"),
-                esModoOffline = usuarioglobal?.idToken == "offline", // 👈 nuevo parámetro
+                userName = usuarioglobal?.nombre ?: defaultUserName,
+                esModoOffline = usuarioglobal?.idToken == "offline",
                 onChatClick = { navController.navigate(Screen.Chat.route) },
                 onFavoritesClick = { navController.navigate(Screen.Favorites.route) },
                 onPartyClick = { navController.navigate(Screen.Party.route) },
@@ -67,35 +67,20 @@ fun AppNavigation(requiresOnboarding: Boolean) { // <-- ¡Añadimos este paráme
             )
         }
 
-
         composable(Screen.Chat.route) {
-            ChatSelectorScreen(
-                onBackClick = { navController.popBackStack() }
-            )
+            ChatSelectorScreen(onBackClick = { navController.popBackStack() })
         }
-
         composable(Screen.Favorites.route) {
-            FavoritesScreen(
-                onBackClick = { navController.popBackStack() }
-            )
+            FavoritesScreen(onBackClick = { navController.popBackStack() })
         }
-
         composable(Screen.Party.route) {
-            PartyScreen(
-                onBackClick = { navController.popBackStack() }
-            )
+            PartyScreen(onBackClick = { navController.popBackStack() })
         }
-
         composable(Screen.Recipes.route) {
-            RecipesScreen(
-                onBackClick = { navController.popBackStack() }
-            )
+            RecipesScreen(onBackClick = { navController.popBackStack() })
         }
-
         composable(Screen.Creations.route) {
-            CreationsScreen(
-                onBackClick = { navController.popBackStack() }
-            )
+            CreationsScreen(onBackClick = { navController.popBackStack() })
         }
     }
 }

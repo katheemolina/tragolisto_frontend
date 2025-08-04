@@ -28,6 +28,9 @@ import com.example.tragolisto.data.model.FavoritoResponse
 import com.example.tragolisto.data.model.Trago
 import com.example.tragolisto.recipes.TragoCard
 import com.example.tragolisto.recipes.TragoDialog
+import androidx.compose.ui.res.stringResource
+import com.example.tragolisto.R
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -35,6 +38,8 @@ fun FavoritesScreen(
     onBackClick: () -> Unit,
     viewModel: FavoritesViewModel = viewModel()
 ) {
+    val all = stringResource(id = R.string.all)
+
     val uiState by viewModel.uiState.collectAsState()
     val tragoDetalleState by viewModel.tragoDetalleState.collectAsState()
     val actionState by viewModel.actionState.collectAsState()
@@ -43,14 +48,14 @@ fun FavoritesScreen(
     var busqueda by rememberSaveable(stateSaver = TextFieldValue.Saver) {
         mutableStateOf(TextFieldValue(""))
     }
-    var dificultadSeleccionada by rememberSaveable { mutableStateOf("Todas") }
+    var dificultadSeleccionada by rememberSaveable { mutableStateOf(all) }
     var soloSinAlcohol by rememberSaveable { mutableStateOf(false) }
 
     val dificultadesConEmojis = mapOf(
-        "Todas" to "✨ Todas",
-        "Fácil" to "👶 Fácil",
-        "Media" to "🧑‍🔧 Media",
-        "Difícil" to "🤯 Difícil"
+        stringResource(id = R.string.all) to "✨ " + stringResource(id = R.string.all),
+        stringResource(id = R.string.easy) to "👶 " + stringResource(id = R.string.easy),
+        stringResource(id = R.string.medium) to "🧑‍🔧 " + stringResource(id = R.string.medium),
+        stringResource(id = R.string.hard) to "🤯 " + stringResource(id = R.string.hard)
     )
 
     LaunchedEffect(actionState) {
@@ -73,7 +78,7 @@ fun FavoritesScreen(
             CenterAlignedTopAppBar(
                 title = {
                     Text(
-                        text = "Mis Favoritos",
+                        text = stringResource(id = R.string.my_favorites),
                         style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
                         textAlign = TextAlign.Center
                     )
@@ -82,7 +87,7 @@ fun FavoritesScreen(
                     IconButton(onClick = onBackClick) {
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "Volver"
+                            contentDescription = stringResource(id = R.string.back)
                         )
                     }
                 }
@@ -104,7 +109,7 @@ fun FavoritesScreen(
                     val favoritosFiltrados = favoritosOriginales.filter { favorito ->
                         val trago = favorito.trago
                         val coincideBusqueda = busqueda.text.isBlank() || trago.nombre.contains(busqueda.text, ignoreCase = true)
-                        val coincideDificultad = dificultadSeleccionada == "Todas" || trago.dificultad.equals(dificultadSeleccionada, ignoreCase = true)
+                        val coincideDificultad = dificultadSeleccionada == stringResource(id = R.string.all) || trago.dificultad.equals(dificultadSeleccionada, ignoreCase = true)
                         val coincideAlcohol = !soloSinAlcohol || !trago.esAlcoholico
                         coincideBusqueda && coincideDificultad && coincideAlcohol
                     }
@@ -118,7 +123,7 @@ fun FavoritesScreen(
                             verticalArrangement = Arrangement.Center
                         ) {
                             Text(
-                                text = "No tienes favoritos guardados",
+                                text = stringResource(id = R.string.no_favorites_saved),
                                 style = MaterialTheme.typography.bodyLarge,
                                 textAlign = TextAlign.Center,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -132,12 +137,11 @@ fun FavoritesScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(horizontal = 16.dp, vertical = 8.dp),
-                                placeholder = { Text("Buscar en favoritos...") },
+                                placeholder = { Text(stringResource(id = R.string.search_in_favorites)) },
                                 singleLine = true
                             )
                             Spacer(modifier = Modifier.height(12.dp))
 
-                            // FILTROS DE DIFICULTAD EN SCROLL HORIZONTAL
                             Box(modifier = Modifier.fillMaxWidth()) {
                                 val scrollState = rememberScrollState()
                                 Row(
@@ -158,13 +162,12 @@ fun FavoritesScreen(
 
                             Spacer(modifier = Modifier.height(12.dp))
 
-                            // FILTRO "SIN ALCOHOL"
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.Center
                             ) {
                                 FilterToggleButton(
-                                    text = "🚫 Sin alcohol",
+                                    text = "🚫 " + stringResource(id = R.string.no_alcohol),
                                     selected = soloSinAlcohol,
                                     onClick = { soloSinAlcohol = !soloSinAlcohol }
                                 )
@@ -208,15 +211,14 @@ fun FavoritesScreen(
                             onClick = { viewModel.cargarFavoritos() },
                             contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp)
                         ) {
-                            Icon(Icons.Default.Refresh, contentDescription = "Reintentar")
+                            Icon(Icons.Default.Refresh, contentDescription = stringResource(id = R.string.retry))
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("Reintentar")
+                            Text(stringResource(id = R.string.retry))
                         }
                     }
                 }
             }
 
-            // Dialog para mostrar el detalle del trago
             if (tragoDetalleState is TragoDetalleUiState.Success) {
                 val trago = (tragoDetalleState as TragoDetalleUiState.Success).trago
                 Dialog(
@@ -242,11 +244,11 @@ fun FavoritesScreen(
             if (tragoDetalleState is TragoDetalleUiState.Error) {
                 AlertDialog(
                     onDismissRequest = { viewModel.limpiarTragoDetalle() },
-                    title = { Text("Error") },
+                    title = { Text(stringResource(id = R.string.error)) },
                     text = { Text((tragoDetalleState as TragoDetalleUiState.Error).message) },
                     confirmButton = {
                         TextButton(onClick = { viewModel.limpiarTragoDetalle() }) {
-                            Text("OK")
+                            Text(stringResource(id = R.string.ok))
                         }
                     }
                 )
@@ -292,15 +294,15 @@ fun FavoritoCard(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    AssistChip(label = "Dificultad", value = favorito.trago.dificultad)
-                    AssistChip(label = "Tiempo", value = "${favorito.trago.tiempoPreparacionMinutos} min")
-                    AssistChip(label = "Alcohol", value = if (favorito.trago.esAlcoholico) "Sí" else "No")
+                    AssistChip(label = stringResource(id = R.string.difficulty), value = favorito.trago.dificultad)
+                    AssistChip(label = stringResource(id = R.string.time), value = "${favorito.trago.tiempoPreparacionMinutos} min")
+                    AssistChip(label = stringResource(id = R.string.alcohol), value = if (favorito.trago.esAlcoholico) stringResource(id = R.string.yes) else stringResource(id = R.string.no))
                 }
             }
             IconButton(onClick = onDeleteClick) {
                 Icon(
                     imageVector = Icons.Default.Delete,
-                    contentDescription = "Eliminar Favorito",
+                    contentDescription = stringResource(id = R.string.delete_favorite),
                     tint = MaterialTheme.colorScheme.error
                 )
             }
@@ -348,4 +350,4 @@ fun AssistChip(label: String, value: String) {
             color = MaterialTheme.colorScheme.onSurface
         )
     }
-} 
+}

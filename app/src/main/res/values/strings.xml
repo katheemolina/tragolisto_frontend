@@ -6,13 +6,17 @@
     <string name="title_activity_chat_selector_screen">ChatSelectorScreen</string>
 
     <!-- LoginScreen -->
-    <string name="error_no_google_account">No se encontró ninguna cuenta de Google en el dispositivo.</string>
-    <string name="error_user_canceled">Inicio de sesión cancelado por el usuario.</string>
-    <string name="error_sign_in_generic">Error al iniciar sesión: %1$s</string>
-    <string name="error_unexpected">Error inesperado: %1$s</string>
-    <string name="error_android_version_unsupported">Tu versión de Android no es compatible con el inicio de sesión con Google.</string>
-    <string name="error_backend_failed">Error al enviar datos al backend: %1$s</string>
-    <string name="error_auth_failed">Error de autenticación: %1$s</string>
+    <string name="unsupported_android_version">Tu versión de Android no es compatible con el inicio de sesión con Google.</string>
+    <string name="login_error_no_account">No se encontró ninguna cuenta de Google en el dispositivo.</string>
+    <string name="login_error_canceled">Inicio de sesión cancelado por el usuario.</string>
+    <string name="login_error_default">Error al iniciar sesión</string>
+    <string name="login_error_unexpected">Error inesperado</string>
+    <string name="error_sending_user_data">Error al enviar datos al backend</string>
+    <string name="auth_error_firebase">Error de autenticación</string>
+    <string name="app_logo_description">Logo de TragoListo</string>
+    <string name="internet_unavailable">No tenés conexión a Internet 😕</string>
+    <string name="sign_in_with_google">Iniciar sesión con Google</string>
+    <string name="enter_offline">Ingresar sin conexión</string>
 
     <!-- ChatScreen -->
     <string name="new_chat_title">Nuevo Chat</string>
@@ -38,11 +42,185 @@
     <string name="recipe_saved">¡Receta guardada en Mis Creaciones!</string>
     <string name="error_saving_recipe">Error al guardar la receta</string>
 
-    <!-- UI Content -->
+    <!-- Creation Screen-->
+    <string name="my_creations">Mis Creaciones</string>
+    <string name="create_new_drink">Crear nuevo trago</string>
+    <string name="no_drinks_created">Aún no has creado ningún trago.\n¡Toca el botón '+' para empezar!</string>
+
+    <string name="ingredients_colon">Ingredientes:</string>
+
+    <string name="create_drink">Crear Trago</string>
+    <string name="close">Cerrar</string>
+    <string name="drink_name">Nombre del trago</string>
+    <string name="description">Descripción</string>
+    <string name="ingredients">Ingredientes</string>
+    <string name="remove_ingredient">Eliminar ingrediente</string>
+    <string name="cancel">Cancelar</string>
+    <string name="save">Guardar</string>
+    <string name="new_ingredient">Nuevo ingrediente</string>
+    <string name="add_ingredient">Agregar ingrediente</string>
+
+    <string name="type_label">Tipo</string>
+    <string name="custom_creation">Creación Propia</string>
+    <string name="delete">Eliminar</string>
+    <string name="confirm_delete_title">Confirmar Eliminación</string>
+    <string name="confirm_delete_text">¿Estás seguro de que quieres eliminar \'%1$s'?</string>
+
+    <!-- Favoritos -->
+    <string name="my_favorites">Mis Favoritos</string>
+    <string name="all">Todas</string>
+    <string name="easy">Fácil</string>
+    <string name="medium">Media</string>
+    <string name="hard">Difícil</string>
+    <string name="no_favorites_saved">No tienes favoritos guardados</string>
+    <string name="search_in_favorites">Buscar en favoritos...</string>
+    <string name="no_alcohol">Sin alcohol</string>
+    <string name="retry">Reintentar</string>
+    <string name="error">Error</string>
+    <string name="ok">OK</string>
+
+    <string name="difficulty">Dificultad</string>
+    <string name="time">Tiempo</string>
+    <string name="alcohol">Alcohol</string>
+    <string name="yes">Sí</string>
+    <string name="no">No</string>
+    <string name="delete_favorite">Eliminar Favorito</string>
+
+    <!-- Homepage -->
+
+    <string name="welcome_message_part1">¡Bienvenido a </string>
+    <string name="app_name_italic">TragoListo</string>
+    <string name="welcome_message_part2">!</string>
+
+    <string name="chat_with_ferni_title">Chatea con Ferni</string>
+    <string name="chat_with_ferni_description">Combina tus ingredientes y recibe recomendaciones personalizadas</string>
+
+    <string name="recipes_title">Recetas</string>
+    <string name="recipes_description">Explora nuestra colección de cócteles clásicos y modernos</string>
+
+    <string name="party_mode_title">Modo fiesta</string>
+    <string name="party_mode_description">Descubre el juego perfecto para tu reunión</string>
+
+    <string name="favorites_title">Mis favoritos</string>
+    <string name="favorites_description">Accede rápidamente a tus recetas guardadas</string>
+
+    <string name="creations_title">Mis creaciones</string>
+    <string name="creations_description">Guarda y comparte tus propias recetas</string>
+
+    <string name="responsible_consumption_title">Consumo responsable</string>
+    <string name="responsible_consumption_description">Si el consumo de alcohol te genera preocupaciones o afecta tu bienestar, podés comunicarte con Alcohólicos Anónimos. Tu salud es lo más importante.</string>
+
+    <string name="call_aa_button">Llamar a Alcohólicos Anónimos</string>
+
+    <!-- Navigation -->
+
+    <string name="default_user_name">Usuario</string>
+
+    <!-- Onboarding -->
+
+    <string name="onboarding_welcome">¡Bienvenido! Completa tu perfil.</string>
+    <string name="onboarding_description">Esta es tu pantalla de onboarding.</string>
+
+    <string name="onboarding_title_ferni">Hola soy Ferni</string>
+    <string name="onboarding_desc_ferni">Tu bartender virtual que te ayudara a preparar deliciosos tragos con lo que tenes en casa.</string>
+
+    <string name="onboarding_title_chat">Chatea con Ferni</string>
+    <string name="onboarding_desc_chat">Contame que ingredientes tenes disponibles y tus preferencias. Te recomendare los mejores tragos que podes preparar sin salir a comprar nada extra</string>
+
+    <string name="onboarding_title_favorites">Guarda tus favoritos</string>
+    <string name="onboarding_desc_favorites">Marca tus recetas preferidas para acceder rapidamente a ellas cuando quieras</string>
+
+    <string name="onboarding_title_party">Modo fiesta</string>
+    <string name="onboarding_desc_party">¿Reunion con amigos? Juegos para que las reuniones sean mas divertidas</string>
+
+    <string name="onboarding_title_recipes">Explora recetas</string>
+    <string name="onboarding_desc_recipes">Descubri nuestra coleccion de recetas clasicas y creativas, con y sin alcohol</string>
+
+    <string name="onboarding_title_learn">Aprende mientras disfrutas</string>
+    <string name="onboarding_desc_learn">Cada receta incluye instrucciones paso a paso, tips y datos curiosos sobre la historia y origen de cada trago</string>
+
+    <string name="onboarding_hello">Hola %1$s</string>
+    <string name="onboarding_birthdate_prompt">Antes de comenzar, necesitamos tu fecha de nacimiento</string>
+
+    <string name="onboarding_select_birthdate">Seleccionar fecha de nacimiento</string>
+
+    <string name="onboarding_finish_button">¡Listo, comencemos!</string>
+    <string name="onboarding_saving">Guardando...</string>
+
+    <string name="onboarding_datepicker_ok">OK</string>
+    <string name="onboarding_datepicker_cancel">Cancelar</string>
+    <string name="onboarding_datepicker_title">Selecciona tu fecha de nacimiento</string>
+    <string name="onboarding_datepicker_headline">Fecha de nacimiento</string>
+
+    <!-- Juegos -->
+
+    <string name="cd_close">Cerrar</string>
+
+    <string name="label_category">Categoría</string>
+    <string name="label_players">Jugadores</string>
+    <string name="label_drinks">Bebidas</string>
+    <string name="label_materials">Materiales</string>
+
+    <string name="alert_drinks_game_title">¡Juego con bebidas!</string>
+    <string name="alert_drinks_game_message">Recuerda beber con responsabilidad y respetar los límites de cada persona.</string>
+
+    <!-- TopBar -->
+    <string name="party_mode">Modo Fiesta</string>
+    <string name="back">Volver</string>
+
+    <!-- Buscador -->
+    <string name="search_game">Buscar juego...</string>
+
+    <!-- Filtro para beber -->
+    <string name="drinking_games">🍻 Para beber</string>
+    <string name="drinking_game_label">🍻 Para beber</string>
+
+    <!-- Categorías con emoji -->
+    <string name="all_categories">📚 Todas</string>
+    <string name="random_category">🎲 Al azar</string>
+    <string name="with_items_category">🎯 Con elementos</string>
+    <string name="creative_category">🎨 Creativo</string>
+    <string name="riddle_category">🧠 De adivinanzas</string>
+    <string name="tasting_category">🍷 De cata</string>
+    <string name="communication_category">🗣️ De comunicación</string>
+    <string name="challenge_category">⚔️ De desafío</string>
+    <string name="question_category">❓ De preguntas</string>
+    <string name="rules_category">📜 De reglas</string>
+    <string name="physical_category">🏃‍♂️ Físico</string>
+    <string name="musical_category">🎵 Musical</string>
+    <string name="category_prefix">Categoría: %1$s</string>
     <string name="content_desc_logo">Logo TragoListo</string>
     <string name="button_sign_in_google">Iniciar sesión con Google</string>
     <string name="button_offline_login">Ingresar sin conexión</string>
     <string name="user_guest">Invitado</string>
+
+    <!-- Recetas -->
+    <string name="search_drink">Buscar trago...</string>
+
+    <string name="all_difficulties">✨ Todas</string>
+    <string name="easy_difficulty">👶 Fácil</string>
+    <string name="medium_difficulty">🧑‍🔧 Media</string>
+    <string name="hard_difficulty">🤯 Difícil</string>
+
+    <string name="non_alcoholic_filter">🚫 Sin alcohol</string>
+
+    <string name="added_to_favorites">Agregado a favoritos</string>
+    <string name="removed_from_favorites">Quitado de favoritos</string>
+    <string name="error_adding_favorite">Error al agregar favorito</string>
+    <string name="error_removing_favorite">Error al quitar favorito</string>
+
+    <string name="difficulty_label">Dificultad: %1$s</string>
+    <string name="non_alcoholic_label">🚫 Sin alcohol</string>
+
+    <string name="remove_from_favorites">Quitar de favoritos</string>
+    <string name="add_to_favorites">Agregar a favoritos</string>
+
+    <!-- TragoDialog -->
+    <string name="instructions">Preparación</string>
+    <string name="tips">Tips</string>
+    <string name="history">Historia</string>
+    <string name="minutes_format">%1$d min</string>
+    <string name="ingredient_line_format">• %1$s: %2$s %3$s</string>
 
 
 </resources>

@@ -18,16 +18,17 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.tragolisto.R
 import com.example.tragolisto.data.local.AppDatabase
 import com.example.tragolisto.data.local.TragoLocal
 import com.example.tragolisto.recipes.InfoChip
 import com.example.tragolisto.recipes.SectionTitle
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -49,7 +50,7 @@ fun CreationsScreen(
             CenterAlignedTopAppBar(
                 title = {
                     Text(
-                        text = "Mis Creaciones",
+                        text = stringResource(id = R.string.my_creations),
                         style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
                         textAlign = TextAlign.Center
                     )
@@ -58,7 +59,7 @@ fun CreationsScreen(
                     IconButton(onClick = onBackClick) {
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "Volver"
+                            contentDescription = stringResource(id = R.string.back)
                         )
                     }
                 }
@@ -66,7 +67,10 @@ fun CreationsScreen(
         },
         floatingActionButton = {
             FloatingActionButton(onClick = { showCreateDialog = true }) {
-                Icon(Icons.Default.Add, contentDescription = "Crear nuevo trago")
+                Icon(
+                    Icons.Default.Add,
+                    contentDescription = stringResource(id = R.string.create_new_drink)
+                )
             }
         }
     ) { paddingValues ->
@@ -82,7 +86,7 @@ fun CreationsScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "Aún no has creado ningún trago.\n¡Toca el botón '+' para empezar!",
+                        text = stringResource(id = R.string.no_drinks_created),
                         style = MaterialTheme.typography.bodyLarge,
                         textAlign = TextAlign.Center,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -169,7 +173,8 @@ fun TragoCreationCard(
             )
             Spacer(modifier = Modifier.height(12.dp))
             Text(
-                text = "Ingredientes: ${trago.ingredientes.split(",").joinToString { it.trim() }}",
+                text = stringResource(id = R.string.ingredients_colon) + " " +
+                        trago.ingredientes.split(",").joinToString { it.trim() },
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1
@@ -214,12 +219,12 @@ fun CreateDrinkDialog(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        text = "Crear Trago",
+                        text = stringResource(id = R.string.create_drink),
                         style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.ExtraBold),
                         modifier = Modifier.weight(1f)
                     )
                     IconButton(onClick = onDismiss) {
-                        Icon(Icons.Default.Close, contentDescription = "Cerrar")
+                        Icon(Icons.Default.Close, contentDescription = stringResource(id = R.string.close))
                     }
                 }
 
@@ -228,7 +233,7 @@ fun CreateDrinkDialog(
                 OutlinedTextField(
                     value = nombre,
                     onValueChange = { if (it.length <= 40) nombre = it },
-                    label = { Text("Nombre del trago") },
+                    label = { Text(stringResource(id = R.string.drink_name)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp)
@@ -239,7 +244,7 @@ fun CreateDrinkDialog(
                 OutlinedTextField(
                     value = descripcion,
                     onValueChange = { if (it.length <= 225) descripcion = it },
-                    label = { Text("Descripción") },
+                    label = { Text(stringResource(id = R.string.description)) },
                     modifier = Modifier
                         .fillMaxWidth()
                         .heightIn(min = 80.dp, max = 150.dp),
@@ -248,7 +253,8 @@ fun CreateDrinkDialog(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                SectionTitle("Ingredientes")
+                SectionTitle(stringResource(id = R.string.ingredients))
+
                 Spacer(modifier = Modifier.height(8.dp))
 
                 IngredienteInput(
@@ -270,7 +276,7 @@ fun CreateDrinkDialog(
                         ) {
                             ingredientesList.forEach { ingredient ->
                                 FilterChip(
-                                    selected = false, // Chips here are just for display, not selection
+                                    selected = false,
                                     onClick = {
                                         ingredientesList = ingredientesList - ingredient
                                     },
@@ -278,7 +284,7 @@ fun CreateDrinkDialog(
                                     trailingIcon = {
                                         Icon(
                                             Icons.Default.Close,
-                                            contentDescription = "Remove ingredient",
+                                            contentDescription = stringResource(id = R.string.remove_ingredient),
                                             modifier = Modifier.size(AssistChipDefaults.IconSize)
                                         )
                                     }
@@ -288,21 +294,21 @@ fun CreateDrinkDialog(
                     }
                 }
 
-                Spacer(modifier = Modifier.weight(1f)) // Pushes buttons to the bottom
+                Spacer(modifier = Modifier.weight(1f))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End
                 ) {
                     TextButton(onClick = onDismiss) {
-                        Text("Cancelar")
+                        Text(stringResource(id = R.string.cancel))
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Button(
                         onClick = { onConfirm(nombre, descripcion, ingredientesList.joinToString(", ")) },
                         enabled = areFieldsValid
                     ) {
-                        Text("Guardar")
+                        Text(stringResource(id = R.string.save))
                     }
                 }
             }
@@ -321,7 +327,7 @@ fun IngredienteInput(onAddIngredient: (String) -> Unit) {
         OutlinedTextField(
             value = ingredienteActual,
             onValueChange = { ingredienteActual = it },
-            label = { Text("Nuevo ingrediente") },
+            label = { Text(stringResource(id = R.string.new_ingredient)) },
             singleLine = true,
             modifier = Modifier.weight(1f),
             shape = RoundedCornerShape(12.dp)
@@ -336,7 +342,7 @@ fun IngredienteInput(onAddIngredient: (String) -> Unit) {
             },
             enabled = ingredienteActual.isNotBlank()
         ) {
-            Icon(Icons.Default.Add, contentDescription = "Agregar ingrediente")
+            Icon(Icons.Default.Add, contentDescription = stringResource(id = R.string.add_ingredient))
         }
     }
 }
@@ -376,7 +382,7 @@ fun TragoDetailDialog(
                         modifier = Modifier.weight(1f)
                     )
                     IconButton(onClick = onDismiss) {
-                        Icon(Icons.Default.Close, contentDescription = "Cerrar")
+                        Icon(Icons.Default.Close, contentDescription = stringResource(id = R.string.close))
                     }
                 }
 
@@ -392,19 +398,14 @@ fun TragoDetailDialog(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    // Assuming you might add difficulty, time, alcohol to TragoLocal in the future
-                    // For now, these are placeholders or can be removed if not applicable
-                    InfoChip("Tipo", "Creación Propia") // Example
-                    // InfoChip("Dificultad", "N/A")
-                    // InfoChip("Tiempo", "N/A")
-                    // InfoChip("Alcohol", "N/A")
+                    InfoChip(stringResource(id = R.string.type_label), stringResource(id = R.string.custom_creation))
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
                 Divider()
                 Spacer(modifier = Modifier.height(16.dp))
 
-                SectionTitle("Ingredientes")
+                SectionTitle(stringResource(id = R.string.ingredients))
                 Spacer(modifier = Modifier.height(8.dp))
                 Column {
                     trago.ingredientes.split(",").filter { it.isNotBlank() }.forEach { ingrediente ->
@@ -416,7 +417,7 @@ fun TragoDetailDialog(
                     }
                 }
 
-                Spacer(modifier = Modifier.weight(1f)) // Pushes buttons to the bottom
+                Spacer(modifier = Modifier.weight(1f))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -427,19 +428,20 @@ fun TragoDetailDialog(
                         onClick = { showDeleteConfirmation = true },
                         colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
                     ) {
-                        Icon(Icons.Default.Delete, contentDescription = "Eliminar", modifier = Modifier.padding(end = 4.dp))
-                        Text("Eliminar")
+                        Icon(Icons.Default.Delete, contentDescription = stringResource(id = R.string.delete))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(stringResource(id = R.string.delete))
                     }
                     Button(onClick = onDismiss) {
-                        Text("Cerrar")
+                        Text(stringResource(id = R.string.close))
                     }
                 }
 
                 if (showDeleteConfirmation) {
                     AlertDialog(
                         onDismissRequest = { showDeleteConfirmation = false },
-                        title = { Text("Confirmar Eliminación") },
-                        text = { Text("¿Estás seguro de que quieres eliminar '${trago.nombre}'?") },
+                        title = { Text(stringResource(id = R.string.confirm_delete_title)) },
+                        text = { Text(stringResource(id = R.string.confirm_delete_text, trago.nombre)) },
                         confirmButton = {
                             Button(
                                 onClick = {
@@ -448,12 +450,12 @@ fun TragoDetailDialog(
                                 },
                                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                             ) {
-                                Text("Eliminar")
+                                Text(stringResource(id = R.string.delete))
                             }
                         },
                         dismissButton = {
                             TextButton(onClick = { showDeleteConfirmation = false }) {
-                                Text("Cancelar")
+                                Text(stringResource(id = R.string.cancel))
                             }
                         }
                     )

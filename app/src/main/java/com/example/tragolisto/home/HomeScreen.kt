@@ -27,6 +27,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontStyle
@@ -34,7 +35,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import com.example.tragolisto.R
 import androidx.core.content.ContextCompat.startActivity
-
 
 @Composable
 fun HomeScreen(
@@ -47,6 +47,31 @@ fun HomeScreen(
     onCreationsClick: () -> Unit
 ) {
     val context = LocalContext.current
+
+    val welcomePart1 = stringResource(id = R.string.welcome_message_part1)
+    val appNameItalic = stringResource(id = R.string.app_name_italic)
+    val welcomePart2 = stringResource(id = R.string.welcome_message_part2)
+
+    val chatTitle = stringResource(id = R.string.chat_with_ferni_title)
+    val chatDescription = stringResource(id = R.string.chat_with_ferni_description)
+
+    val recipesTitle = stringResource(id = R.string.recipes_title)
+    val recipesDescription = stringResource(id = R.string.recipes_description)
+
+    val partyTitle = stringResource(id = R.string.party_mode_title)
+    val partyDescription = stringResource(id = R.string.party_mode_description)
+
+    val favoritesTitle = stringResource(id = R.string.favorites_title)
+    val favoritesDescription = stringResource(id = R.string.favorites_description)
+
+    val creationsTitle = stringResource(id = R.string.creations_title)
+    val creationsDescription = stringResource(id = R.string.creations_description)
+
+    val responsibleTitle = stringResource(id = R.string.responsible_consumption_title)
+    val responsibleDescription = stringResource(id = R.string.responsible_consumption_description)
+
+    val callAaButton = stringResource(id = R.string.call_aa_button)
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -58,32 +83,29 @@ fun HomeScreen(
         // Welcome message
         Text(
             text = buildAnnotatedString {
-                append("¡Bienvenido a ")
-
+                append(welcomePart1)
                 withStyle(
                     style = SpanStyle(
                         fontStyle = FontStyle.Italic,
                         color = Color(0xFFFEA28E)
                     )
                 ) {
-                    append("TragoListo")
+                    append(appNameItalic)
                 }
-
-                append(" $userName!")
+                append(" $userName$welcomePart2")
             },
             style = MaterialTheme.typography.headlineMedium.copy(
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary // Este color aplica al resto del texto
+                color = MaterialTheme.colorScheme.primary
             ),
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(vertical = 16.dp)
         )
 
-
         if (!esModoOffline) {
             HomeCard(
-                title = "Chatea con Ferni",
-                description = "Combina tus ingredientes y recibe recomendaciones personalizadas",
+                title = chatTitle,
+                description = chatDescription,
                 icon = painterResource(id = R.drawable.ic_ferni),
                 onClick = onChatClick,
                 backgroundColor = Color(0xFFEDF6FF)
@@ -91,37 +113,37 @@ fun HomeScreen(
         }
 
         HomeCard(
-            title = "Recetas",
-            description = "Explora nuestra colección de cócteles clásicos y modernos",
+            title = recipesTitle,
+            description = recipesDescription,
             icon = painterResource(id = R.drawable.ic_recetas),
             onClick = onRecipesClick,
-            backgroundColor = Color(0xFFE8F5E9) // verde claro
+            backgroundColor = Color(0xFFE8F5E9)
         )
 
         HomeCard(
-            title = "Modo fiesta",
-            description = "Descubre el juego perfecto para tu reunión",
+            title = partyTitle,
+            description = partyDescription,
             icon = painterResource(id = R.drawable.ic_fiesta),
             onClick = onPartyClick,
-            backgroundColor = Color(0xFFFFF8E1) // amarillo claro
+            backgroundColor = Color(0xFFFFF8E1)
         )
 
         if (!esModoOffline) {
             HomeCard(
-                title = "Mis favoritos",
-                description = "Accede rápidamente a tus recetas guardadas",
+                title = favoritesTitle,
+                description = favoritesDescription,
                 icon = painterResource(id = R.drawable.ic_favoritos),
                 onClick = onFavoritesClick,
-                backgroundColor = Color(0xFFFFEBEE) // rosa claro
+                backgroundColor = Color(0xFFFFEBEE)
             )
         }
 
         HomeCard(
-            title = "Mis creaciones",
-            description = "Guarda y comparte tus propias recetas",
+            title = creationsTitle,
+            description = creationsDescription,
             icon = painterResource(id = R.drawable.ic_creaciones),
             onClick = onCreationsClick,
-            backgroundColor = Color(0xFFF3E5F5) // violeta claro
+            backgroundColor = Color(0xFFF3E5F5)
         )
 
         Spacer(modifier = Modifier.height(32.dp))
@@ -143,7 +165,7 @@ fun HomeScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Text(
-                    text = "Consumo responsable",
+                    text = responsibleTitle,
                     style = MaterialTheme.typography.titleMedium.copy(
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary
@@ -152,7 +174,7 @@ fun HomeScreen(
                 )
 
                 Text(
-                    text = "Si el consumo de alcohol te genera preocupaciones o afecta tu bienestar, podés comunicarte con Alcohólicos Anónimos. Tu salud es lo más importante.",
+                    text = responsibleDescription,
                     style = MaterialTheme.typography.bodyMedium,
                     textAlign = TextAlign.Center,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -177,7 +199,7 @@ fun HomeScreen(
                         contentDescription = null,
                         modifier = Modifier.padding(end = 8.dp)
                     )
-                    Text("Llamar a Alcohólicos Anónimos")
+                    Text(callAaButton)
                 }
             }
         }
