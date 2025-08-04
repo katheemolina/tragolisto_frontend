@@ -4,4 +4,46 @@
     <string name="title_activity_google_login">GoogleLogin</string>
     <string name="title_activity_login_screen">LoginScreen</string>
     <string name="title_activity_chat_selector_screen">ChatSelectorScreen</string>
+
+    <!-- LoginScreen -->
+    <string name="error_no_google_account">No se encontró ninguna cuenta de Google en el dispositivo.</string>
+    <string name="error_user_canceled">Inicio de sesión cancelado por el usuario.</string>
+    <string name="error_sign_in_generic">Error al iniciar sesión: %1$s</string>
+    <string name="error_unexpected">Error inesperado: %1$s</string>
+    <string name="error_android_version_unsupported">Tu versión de Android no es compatible con el inicio de sesión con Google.</string>
+    <string name="error_backend_failed">Error al enviar datos al backend: %1$s</string>
+    <string name="error_auth_failed">Error de autenticación: %1$s</string>
+
+    <!-- ChatScreen -->
+    <string name="new_chat_title">Nuevo Chat</string>
+    <string name="placeholder_message">Escribe un mensaje…</string>
+    <string name="content_desc_send">Enviar</string>
+    <string name="ingredients_label">Ingredientes:</string>
+    <string name="bullet_ingredient">• %1$s</string>
+    <string name="button_save_recipe">Guardar Receta</string>
+
+    <string name="my_chats">Mis Chats</string>
+    <string name="create_new_chat">➕ Nuevo Chat</string>
+    <string name="select_or_create_chat">Selecciona o crea un chat para comenzar 🍸</string>
+    <string name="go_back">Volver</string>
+    <string name="open_menu">Abrir menú</string>
+    <string name="loading_chats">Cargando chats...</string>
+    <string name="close_menu">Cerrar menú</string>
+
+    <string name="welcome_message">¡Hola! Soy Ferni, tu bartender virtual 🍸 ¿Qué ingredientes tenés hoy?</string>
+    <string name="no_response">Sin respuesta.</string>
+    <string name="error_response">Error: %s</string>
+    <string name="error_unknown">Error: %s</string>
+    <string name="unknown_error">Error desconocido</string>
+    <string name="recipe_saved">¡Receta guardada en Mis Creaciones!</string>
+    <string name="error_saving_recipe">Error al guardar la receta</string>
+
+    <!-- UI Content -->
+    <string name="content_desc_logo">Logo TragoListo</string>
+    <string name="button_sign_in_google">Iniciar sesión con Google</string>
+    <string name="button_offline_login">Ingresar sin conexión</string>
+    <string name="user_guest">Invitado</string>
+
+
 </resources>
+

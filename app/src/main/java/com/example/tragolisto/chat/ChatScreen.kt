@@ -17,12 +17,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.tragolisto.R
 import com.example.tragolisto.data.local.AppDatabase
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -36,6 +38,8 @@ fun ChatScreen(
         )
     )
 ) {
+    val newChatTitle = stringResource(R.string.new_chat_title)
+
     val messages by viewModel.messages.collectAsState()
     val snackbarMessage by viewModel.snackbarMessage.collectAsState()
     var inputText by remember { mutableStateOf("") }
@@ -43,7 +47,7 @@ fun ChatScreen(
     val isCargando by viewModel.isCargandoMensajes.collectAsState()
 
     LaunchedEffect(chatTitle) {
-        if (chatTitle == "Nuevo Chat") {
+        if (chatTitle == newChatTitle) {
             viewModel.limpiarMensajes()
         } else {
             viewModel.cargarMensajesDeChat(chatTitle)
@@ -73,7 +77,7 @@ fun ChatScreen(
                     modifier = Modifier.weight(1f),
                     value = inputText,
                     onValueChange = { inputText = it },
-                    placeholder = { Text("Escribe un mensaje...") },
+                    placeholder = { Text(stringResource(R.string.placeholder_message)) },
                     maxLines = 4,
                     keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Send),
                     keyboardActions = KeyboardActions(
@@ -93,7 +97,7 @@ fun ChatScreen(
                         }
                     }
                 ) {
-                    Icon(Icons.Default.Send, contentDescription = "Enviar")
+                    Icon(Icons.Default.Send, contentDescription = stringResource(R.string.content_desc_send))
                 }
             }
         },
@@ -161,7 +165,6 @@ fun MessageItem(
                         .padding(horizontal = 12.dp, vertical = 8.dp)
                         .widthIn(max = 280.dp)
                 ) {
-
                     if (message.isRecipe && message.recipeData != null) {
                         val recipe = message.recipeData.data
                         Text(
@@ -179,14 +182,14 @@ fun MessageItem(
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "Ingredientes:",
+                            text = stringResource(R.string.ingredients_label),
                             fontWeight = FontWeight.Bold,
                             style = MaterialTheme.typography.bodyMedium,
                             color = Color.Black
                         )
                         recipe.ingredientes.forEach { ingredient ->
                             Text(
-                                text = "• ${ingredient.trim()}",
+                                text = stringResource(R.string.bullet_ingredient, ingredient.trim()),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = Color.Black
                             )
@@ -211,7 +214,7 @@ fun MessageItem(
                     Text(text = "💾", style = MaterialTheme.typography.bodyMedium)
                     Spacer(Modifier.size(ButtonDefaults.IconSpacing))
                     Text(
-                        text = "Guardar Receta",
+                        text = stringResource(R.string.button_save_recipe),
                         style = MaterialTheme.typography.labelLarge
                     )
                 }

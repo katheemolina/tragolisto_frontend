@@ -29,6 +29,9 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import com.example.tragolisto.R
 
 class ChatSelectorViewModel : ViewModel() {
 
@@ -76,8 +79,18 @@ fun ChatSelectorScreen(
     onBackClick: () -> Unit,
     viewModel: ChatSelectorViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
 ) {
+    val context = LocalContext.current
+    val nuevoChatLabel = stringResource(R.string.new_chat_title)
+    val misChatsLabel = stringResource(R.string.my_chats)
+    val crearNuevoChatLabel = stringResource(R.string.create_new_chat)
+    val seleccionaChatLabel = stringResource(R.string.select_or_create_chat)
+    val volverLabel = stringResource(R.string.go_back)
+    val abrirMenuLabel = stringResource(R.string.open_menu)
+    val cargandoChatsLabel = stringResource(R.string.loading_chats)
+    val cerrarMenuLabel = stringResource(R.string.close_menu)
+
     var selectedChatId by remember { mutableStateOf<Int?>(null) }
-    var selectedChatTitle by remember { mutableStateOf<String?>("Nuevo Chat") }
+    var selectedChatTitle by remember { mutableStateOf<String?>(nuevoChatLabel) }
     var isMenuVisible by remember { mutableStateOf(false) }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -85,7 +98,7 @@ fun ChatSelectorScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = "Mis Chats",
+                        text = misChatsLabel,
                         modifier = Modifier.fillMaxWidth(),
                         style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
                         textAlign = TextAlign.Center
@@ -93,12 +106,12 @@ fun ChatSelectorScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
+                        Icon(Icons.Default.ArrowBack, contentDescription = volverLabel)
                     }
                 },
                 actions = {
                     IconButton(onClick = { isMenuVisible = true }) {
-                        Icon(Icons.Default.Menu, contentDescription = "Abrir menú")
+                        Icon(Icons.Default.Menu, contentDescription = abrirMenuLabel)
                     }
                 }
             )
@@ -119,14 +132,13 @@ fun ChatSelectorScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "Selecciona o crea un chat para comenzar 🍸",
+                        text = seleccionaChatLabel,
                         style = MaterialTheme.typography.titleMedium
                     )
                 }
             }
         }
 
-        // Fondo negro translúcido detrás del menú
         if (isMenuVisible) {
             Box(
                 modifier = Modifier
@@ -139,7 +151,6 @@ fun ChatSelectorScreen(
             )
         }
 
-        // Menú deslizable desde la derecha
         AnimatedVisibility(
             visible = isMenuVisible,
             enter = slideInHorizontally(initialOffsetX = { it }) + fadeIn(),
@@ -163,7 +174,7 @@ fun ChatSelectorScreen(
                     ) {
                         item {
                             Text(
-                                "Mis Chats",
+                                misChatsLabel,
                                 style = MaterialTheme.typography.titleMedium,
                                 modifier = Modifier.padding(bottom = 16.dp)
                             )
@@ -171,18 +182,18 @@ fun ChatSelectorScreen(
                             TextButton(
                                 onClick = {
                                     selectedChatId = null
-                                    selectedChatTitle = "Nuevo Chat"
+                                    selectedChatTitle = nuevoChatLabel
                                     isMenuVisible = false
                                 },
                                 modifier = Modifier.fillMaxWidth()
                             ) {
-                                Text("➕ Nuevo Chat")
+                                Text(crearNuevoChatLabel)
                             }
                         }
 
                         if (viewModel.isLoading) {
                             item {
-                                Text("Cargando chats...", modifier = Modifier.padding(16.dp))
+                                Text(cargandoChatsLabel, modifier = Modifier.padding(16.dp))
                             }
                         } else if (viewModel.errorMessage != null) {
                             item {
@@ -213,7 +224,7 @@ fun ChatSelectorScreen(
                                 onClick = { isMenuVisible = false },
                                 modifier = Modifier.fillMaxWidth()
                             ) {
-                                Text("Cerrar menú")
+                                Text(cerrarMenuLabel)
                             }
                         }
                     }
