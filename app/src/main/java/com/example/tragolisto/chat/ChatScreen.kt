@@ -187,9 +187,9 @@ fun MessageItem(
                             style = MaterialTheme.typography.bodyMedium,
                             color = Color.Black
                         )
-                        recipe.ingredientes.forEach { ingredient ->
+                        recipe.ingredientes.forEach { ingrediente ->
                             Text(
-                                text = stringResource(R.string.bullet_ingredient, ingredient.trim()),
+                                text = ingrediente.trim(),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = Color.Black
                             )

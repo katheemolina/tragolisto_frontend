@@ -66,6 +66,9 @@ fun OnboardingScreen(
     esModoInvitado: Boolean,
     onFinish: () -> Unit
 ) {
+    val error_no_token = stringResource(id = R.string.error_no_token)
+    val error_token_failed = stringResource(id = R.string.error_token_failed)
+
     var currentPage by remember { mutableStateOf(0) }
     var birthDate by remember { mutableStateOf<LocalDate?>(null) }
     var showDatePicker by remember { mutableStateOf(false) }
@@ -285,11 +288,11 @@ fun OnboardingScreen(
                                         }
                                     } else {
                                         isSavingBirthDate = false
-                                        errorMessage = stringResource(id = R.string.error_no_token)
+                                        errorMessage = error_no_token
                                     }
                                 } else {
                                     isSavingBirthDate = false
-                                    errorMessage = stringResource(id = R.string.error_token_failed, task.exception?.localizedMessage ?: "")
+                                    errorMessage = error_token_failed
                                 }
                             }
                         }
