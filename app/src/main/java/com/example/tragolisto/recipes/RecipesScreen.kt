@@ -49,8 +49,7 @@ fun RecipesScreen(
     val context = LocalContext.current
 
     LaunchedEffect(Unit) {
-        val recetasOffline = cargarRecetasOffline(context)
-        viewModel.setTragos(recetasOffline)
+        viewModel.cargarTragos(context)
         viewModel.cargarFavoritos()
     }
 
